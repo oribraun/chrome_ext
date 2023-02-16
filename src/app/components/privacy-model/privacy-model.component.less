@@ -1,0 +1,145 @@
+.model {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #fff;
+    background: url(../../../assets/images/login/login-bg-pattern.svg);
+    padding: 10px;
+    border-radius: 5px;
+    height: 100%;
+    .logout {
+        position: absolute;
+        top: 0;
+        right: 0;
+        font-size: 1.2em;
+        padding: 1px 4px;
+        z-index: 1;
+    }
+    a {
+        cursor: pointer;
+    }
+    .logo {
+        position: relative;
+        text-align: center;
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        img {
+            position: relative;
+            max-width: 500px;
+            width: 100%;
+        }
+    }
+    .box {
+        margin-top: 15px;
+        .header {
+            position: relative;
+            margin-bottom: 5px;
+            .text {
+                border-bottom: 1px solid #ccc;
+            }
+
+            #suggested_prompt_clipboard {
+                margin-left: 5px;
+                cursor: pointer;
+            }
+            &::after {
+                content: '';
+                position: absolute;
+                left: calc(50% - 5px);
+                top: 100%;
+                margin-top: -1px;
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #163a65;
+                clear: both;
+            }
+        }
+
+        .buttons {
+            text-align: center;
+
+            #force_button {
+                box-shadow: 0 0 5px #c0c0c0;
+                border-radius: 5px;
+                padding: 8px 9px 10px 9px;
+                line-height: 1;
+                margin-top: 5px;
+                border: none;
+                background: #163a65;
+                color: #fff;
+            }
+        }
+        .pass_privacy_success {
+            color: #00cf00;
+        }
+
+        .pass_privacy_failed {
+            color: red;
+        }
+    }
+    .test-pass {
+        color: #00cf00;
+    }
+    .test-failed {
+        color: red;
+    }
+}
+
+input {
+    outline: none !important;
+    box-shadow: none !important;
+}
+#tooltip {
+    position: relative;
+    top: 5px;
+    left: 5px;
+    right: 12px;
+    //background: #f7f7f8;
+    color: #000;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        margin-top: -10px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent #f7f7f8 transparent;
+    }
+    #close {
+        position: absolute;
+        right: 0;
+        top: 0;
+        padding: 10px;
+        cursor: pointer;
+        font-family: cursive;
+        line-height: 1;
+        font-size: .9em;
+    }
+    #data {
+        margin-top: 20px;
+        text-align: center;
+        #suggested_prompt_clipboard {
+            cursor: pointer;
+            color: rgba(142,142,160,1);
+        }
+        #suggested_prompt_clipboard:hover {
+            color: #000;
+        }
+    }
+    .buttons {
+        text-align: center;
+        #force_button {
+            box-shadow: 0 0 5px #c0c0c0;
+            border-radius: 5px;
+            padding: 4px 5px 6px 5px;
+            line-height: 1;
+            margin-top: 5px;
+        }
+    }
+}

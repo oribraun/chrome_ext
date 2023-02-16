@@ -2,6 +2,7 @@ import { OnDestroy, Directive } from '@angular/core';
 import { AppInjector } from '@core/configs/app-injector';
 import { OptionsService } from '@core/services/options.service';
 import { Subscription } from 'rxjs';
+import {Router} from "@angular/router";
 
 @Directive()
 export class BaseAbstract implements OnDestroy {
@@ -10,7 +11,9 @@ export class BaseAbstract implements OnDestroy {
     protected timeouts: { [key: string]: any } = {};
     protected optionsService: OptionsService;
 
-    constructor() {
+    constructor(
+        private router: Router
+    ) {
         this.optionsService = AppInjector.injector.get(OptionsService);
     }
 
@@ -28,8 +31,12 @@ export class BaseAbstract implements OnDestroy {
     }
 
     openOptionsPage(): void {
-        chrome.runtime.openOptionsPage(() => {
-            console.log('Option page opened')
-        });
+        if(chrome.runtime) {
+            chrome.runtime.openOptionsPage(() => {
+                console.log('Option page opened')
+            });
+        } else {
+            this.router.navigate(['options'])
+        }
     }
 }

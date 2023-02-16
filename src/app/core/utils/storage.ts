@@ -2,23 +2,56 @@ import { environment } from '@environment';
 
 export class Storage {
     public static async get(key: string): Promise<{ [key: string]: string | number | boolean }> {
-        return chrome.storage.sync.get(this.getKey(key));
+        if (chrome.storage) {
+            return chrome.storage.sync.get(this.getKey(key));
+        } else {
+            key = this.getKey(key)
+            const obj: any = {}
+            obj[key] = localStorage.getItem(key)
+            return new Promise((resolve, reject) => {
+                resolve(obj);
+            })
+        }
     }
 
     public static async set(key: string, value: any): Promise<void> {
-        return chrome.storage.sync.set({ [this.getKey(key)]: value });
+        if (chrome.storage) {
+            return chrome.storage.sync.set({[this.getKey(key)]: value});
+        } else {
+            return new Promise((resolve, reject) => {
+                resolve(localStorage.setItem(this.getKey(key), value))
+            })
+        }
     }
 
     public static async remove(key: string): Promise<void> {
-        return chrome.storage.sync.remove(this.getKey(key));
+        if (chrome.storage) {
+            return chrome.storage.sync.remove(this.getKey(key));
+        } else {
+            return new Promise((resolve, reject) => {
+                resolve(localStorage.removeItem(this.getKey(key)))
+            })
+        }
     }
 
     public static async clear(): Promise<void> {
-        return chrome.storage.sync.clear();
+        if (chrome.storage) {
+            return chrome.storage.sync.clear();
+        } else {
+            return new Promise((resolve, reject) => {
+                resolve(localStorage.clear())
+            })
+        }
     }
 
     public static async getBytesInUse(): Promise<number> {
-        return chrome.storage.sync.getBytesInUse();
+        if (chrome.storage) {
+            return chrome.storage.sync.getBytesInUse();
+        } else {
+            return new Promise((resolve, reject) => {
+                resolve(new Blob(Object.values(localStorage)).size)
+            })
+        }
     }
 
     private static getKey(key: string): string {

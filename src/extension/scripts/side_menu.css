@@ -1,0 +1,71 @@
+@keyframes domain-tabs-appear {
+    from {
+        right: -400px;
+    }
+    to {
+        right: 0px;
+    }
+}
+
+:root {
+    --background: #fff;
+    --logo-width: 48px;
+}
+
+#domain-tabs-sidebar {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+    top: 0;
+    right: -375px;
+    height: 100%;
+    width: 375px;
+    visibility: visible;
+    background-color: transparent;
+    z-index: 99999999999999;
+    box-shadow: 0 0 30px 0 rgb(0 0 0 / 30%);
+    transition: .3s all ease-in-out;
+    /*animation: domain-tabs-appear 0.2s 1 linear;*/
+}
+.domain-tabs-sidebar-show {
+    right: 0 !important;
+}
+#domain-tabs-sidebar iframe {
+    position: static !important;
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0;
+    padding: 0;
+    z-index: 10000;
+    border: none;
+    -webkit-transform: none;
+    background: var(--background);
+}
+#domain-tabs-sidebar-left-arrow {
+    position: absolute;
+    top: calc(50% - (var(--logo-width) / 2));
+    left: 0;
+    border: none;
+    width: var(--logo-width);
+    height: var(--logo-width);
+    margin-left: calc(var(--logo-width) * -1);
+    cursor: pointer;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    box-shadow: 0 0 5px #ccc;
+    z-index: -1;
+}
+#domain-tabs-sidebar-left-arrow-background {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+}
+
+.domain-tabs-sidebar-closing {
+    right: -400px !important;
+
+    -webkit-transition: right 0.2s linear;
+    transition: right 0.2s linear;
+}
+

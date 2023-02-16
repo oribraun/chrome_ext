@@ -9,7 +9,7 @@ module.exports = {
         new ExtensionReloader({
             reloadPage: true,
             entries: {
-                background: 'background',
+                // background: 'background',
             }
         })
     ]

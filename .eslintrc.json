@@ -9,6 +9,7 @@
         "*.ts"
       ],
       "parserOptions": {
+        "ecmaVersion": 2020,
         "project": [
           "tsconfig.json"
         ],

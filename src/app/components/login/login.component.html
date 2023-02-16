@@ -1,0 +1,51 @@
+<div class="login container">
+    <div class="logo">
+        <img src="/assets/images/Gaia_blue_short_transparent.png" alt="">
+    </div>
+    <div class="form-group">
+        <form [ngSwitch]="formType">
+            <div *ngSwitchCase="'login'">
+                <h3 class="text-center">Login</h3>
+                <label for="email">Email Or Username</label>
+                <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
+                <label for="password">Password</label>
+                <input type="password" name="password" class="form-control" id="password" [(ngModel)]="password" required>
+                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
+                <br>
+                <div class="text-center">
+                    <button class="btn btn-primary" (click)="login()">Login</button>
+                </div>
+                <br>
+                <p>Don't have an account? <a (click)="formType='register'; loginErr = '';">Register</a></p>
+                <p><a (click)="formType='forgot'; loginErr = '';">Forgot Password</a></p>
+            </div>
+            <div *ngSwitchCase="'register'">
+                <h3 class="text-center">Register</h3>
+                <label for="username">Username</label>
+                <input type="text" name="username" class="form-control" id="username" [(ngModel)]="username" required>
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
+                <label for="password">Password</label>
+                <input type="password" name="password" class="form-control" id="password" [(ngModel)]="password" required>
+                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
+                <br>
+                <div class="text-center">
+                    <button class="btn btn-primary" (click)="register()">Register</button>
+                </div>
+                <br>
+                <p>Already have an account? <a (click)="formType='login'; loginErr = '';">Login</a></p>
+            </div>
+            <div *ngSwitchCase="'forgot'">
+                <h3 class="text-center">Forgot Password</h3>
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
+                <br>
+                <div class="text-center">
+                    <button class="btn btn-primary" (click)="forgot()">Submit</button>
+                </div>
+                <br>
+                <p>Remember your password? <a (click)="formType='login'; loginErr = '';">Login</a></p>
+            </div>
+        </form>
+    </div>
+</div>

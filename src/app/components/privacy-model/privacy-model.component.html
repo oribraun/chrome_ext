@@ -1,0 +1,60 @@
+<app-header></app-header>
+<div class="model container">
+    <div class="headline-no-prompt">
+        <h2 class="text-center">Endpoint</h2>
+        <!--        <button (click)="testPrivacyModelApi()">test</button>-->
+    </div>
+    <div class="input-group mb-1">
+        <span class="input-group-text">
+            <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>
+            <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>
+            <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>
+        </span>
+        <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">
+        <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>
+    </div>
+    <div class="headline-no-prompt" *ngIf="!modelResults">
+        <h2 class="text-center">Start Using {{host}}</h2>
+    </div>
+    <div class="headline-with-prompt" *ngIf="modelResults">
+        <h2 class="text-center">Privacy Model Results</h2>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Suggested Prompt</span> <i id="suggested_prompt_clipboard" class="bi bi-clipboard" (click)="copyPrompt()"></i>
+            </div>
+            <div>
+                {{modelResults.suggested_prompt}}
+            </div>
+        </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Model Used</span>
+            </div>
+            <div>
+                {{modelResults.suggested_model}}
+            </div>
+        </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Model Results</span>
+            </div>
+            <div>
+                {{modelResults.model_res | json}}
+            </div>
+        </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Privacy Pass</span>
+            </div>
+            <div>
+                <div class="pass_privacy_failed" *ngIf="!modelResults.pass_privacy">prompt did not pass privacy policy</div>
+                <div class="pass_privacy_success" *ngIf="modelResults.pass_privacy">prompt pass privacy policy</div>
+            </div>
+        </div>
+        <div class="text-center box">
+            <div class="buttons" *ngIf="!modelResults.pass_privacy">
+                <button id="force_button" (click)="forcePrompt()">Continue Anyway</button>
+            </div>
+        </div>
+    </div>
+</div>

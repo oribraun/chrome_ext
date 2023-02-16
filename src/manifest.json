@@ -1,26 +1,35 @@
 {
-  "name": "angular-chrome-extension",
-  "short_name": "angular-chrome-extension",
-  "description": "Template for angular chrome extension",
+  "name": "Gaia",
+  "short_name": "Gaia",
+  "description": "Gaia Labs presenting privacy model for ChatGpt",
   "version": "1.0.0",
   "manifest_version": 3,
   "action": {
-    "default_popup": "index.html?#/popup",
-    "default_title": "Angular Chrome Extension"
+    "default_title": "Gaia"
   },
+  "host_permissions": [
+    "https://chat.openai.com/chat"
+  ],
   "options_page": "index.html?#/options",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "extension/background/background.js"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [ "*"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; style-src 'self' 'unsafe-inline'"
   },
   "permissions": [
-    "bookmarks",
+    "storage",
+    "activeTab",
+    "scripting",
     "tabs",
-    "chrome://favicon/",
-    "history",
-    "storage"
+    "cookies",
+    "webNavigation"
   ],
   "icons": {
     "512": "/assets/icons/android-chrome-512x512.png",
