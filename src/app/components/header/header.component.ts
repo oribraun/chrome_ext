@@ -11,6 +11,7 @@ import {IsActiveMatchOptions, Router} from "@angular/router";
 })
 export class HeaderComponent implements OnInit {
     user: any;
+    isCompany = false;
     routerLinkActiveOptions: IsActiveMatchOptions = {
         fragment: "exact",
         paths: "exact",
@@ -28,7 +29,12 @@ export class HeaderComponent implements OnInit {
         this.user = this.config.user;
         this.config.user_subject.subscribe((user) => {
             this.user = user;
+            this.config.is_company = this.user.company_name;
         })
+        // this.isCompany = this.user.company_name;
+        // this.config.is_company_subject.subscribe((isCompany) => {
+        //     this.isCompany = isCompany;
+        // })
         return;
     }
 
@@ -38,6 +44,10 @@ export class HeaderComponent implements OnInit {
         this.config.resetCookies();
         this.config.resetUserCreds();
         this.router.navigate(['/login'])
+    }
+
+    changePage(page: string) {
+        this.chromeExtensionService.Broadcast('page-change', {page: page});
     }
 
 }

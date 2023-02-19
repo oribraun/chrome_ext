@@ -18,6 +18,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
     host: any
     user: any;
     resultsModelTest: any;
+    listener: any;
     constructor(
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
@@ -103,47 +104,88 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
     }
 
     listenToChromeContentScriptMessages() {
-        this.chromeExtensionService.listenToMessages.subscribe((obj) => {
+        this.listener = this.chromeExtensionService.ListenFor("privacy-model").subscribe((obj) => {
+            console.log('this.router.url',this.router.url)
             const request = obj.request;
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
-            if (request.type && request.type === "privacy-model") {
-                this.resetModelResults();
-                const prompt = request.prompt;
-                this.apiService.privacyModel(prompt, this.endPoint).subscribe(async (res) => {
-                    this.modelResults = res;
-                    this.forceBindChanges();
-                    console.log('this.modelResults', this.modelResults)
-                    if (this.modelResults.pass_privacy) {
-                        this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
-                    } else {
-                        this.chromeExtensionService.showSidebar();
-                        // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-                        // console.log('tab', tab)
-                        // chrome.tabs.sendMessage(tab.id, {type: 'toggle-sidebar'}, (response) => {
-                        //     console.log('toggle-sidebar got the message', response)
-                        // });
-                    }
+            this.resetModelResults();
+            const prompt = request.prompt;
+            this.apiService.privacyModel(prompt, this.endPoint).subscribe(async (res) => {
+                this.modelResults = res;
+                this.forceBindChanges();
+                console.log('this.modelResults', this.modelResults)
+                if (this.modelResults.pass_privacy) {
+                    this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
+                } else {
+                    this.chromeExtensionService.showSidebar();
                     // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-                    // const response = await chrome.tabs.sendMessage(tab.id, {type: 'privacy-model-response', response: res});
-                    // console.log('content script got the message', response)
-                }, (err) => {
-                    if (err.status === 403) {
-                        // Forbidden - not exist
-                    }
-                    if (err.status === 401) {
-                        // Unauthorized
-                        this.config.resetCookies();
-                        this.config.resetUserCreds();
-                        this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-                        this.chromeExtensionService.showSidebar();
-                        this.router.navigate(['/login']);
-                    }
-                    console.log('err', err)
-                })
-            }
+                    // console.log('tab', tab)
+                    // chrome.tabs.sendMessage(tab.id, {type: 'toggle-sidebar'}, (response) => {
+                    //     console.log('toggle-sidebar got the message', response)
+                    // });
+                }
+                // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+                // const response = await chrome.tabs.sendMessage(tab.id, {type: 'privacy-model-response', response: res});
+                // console.log('content script got the message', response)
+            }, (err) => {
+                if (err.status === 403) {
+                    // Forbidden - not exist
+                }
+                if (err.status === 401) {
+                    // Unauthorized
+                    this.config.resetCookies();
+                    this.config.resetUserCreds();
+                    this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+                    this.chromeExtensionService.showSidebar();
+                    this.router.navigate(['/login']);
+                }
+                console.log('err', err)
+            })
             sendResponse({success: true});
         })
+        // this.chromeExtensionService.listenToMessages.subscribe((obj) => {
+        //     console.log('this.router.url',this.router.url)
+        //     const request = obj.request;
+        //     const sender = obj.sender;
+        //     const sendResponse = obj.sendResponse;
+        //     if (request.type && request.type === "privacy-model") {
+        //         this.resetModelResults();
+        //         const prompt = request.prompt;
+        //         this.apiService.privacyModel(prompt, this.endPoint).subscribe(async (res) => {
+        //             this.modelResults = res;
+        //             this.forceBindChanges();
+        //             console.log('this.modelResults', this.modelResults)
+        //             if (this.modelResults.pass_privacy) {
+        //                 this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
+        //             } else {
+        //                 this.chromeExtensionService.showSidebar();
+        //                 // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+        //                 // console.log('tab', tab)
+        //                 // chrome.tabs.sendMessage(tab.id, {type: 'toggle-sidebar'}, (response) => {
+        //                 //     console.log('toggle-sidebar got the message', response)
+        //                 // });
+        //             }
+        //             // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+        //             // const response = await chrome.tabs.sendMessage(tab.id, {type: 'privacy-model-response', response: res});
+        //             // console.log('content script got the message', response)
+        //         }, (err) => {
+        //             if (err.status === 403) {
+        //                 // Forbidden - not exist
+        //             }
+        //             if (err.status === 401) {
+        //                 // Unauthorized
+        //                 this.config.resetCookies();
+        //                 this.config.resetUserCreds();
+        //                 this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+        //                 this.chromeExtensionService.showSidebar();
+        //                 this.router.navigate(['/login']);
+        //             }
+        //             console.log('err', err)
+        //         })
+        //     }
+        //     sendResponse({success: true});
+        // })
     }
 
     promptOptimizer() {
@@ -214,6 +256,8 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
             //     console.log('removing listenToChromeExtMessages')
             //     chrome.runtime.onMessage.removeListener(this.chromeListener);
         }
+        // this.chromeExtensionService.ClearEvent("privacy-model");
+        this.listener.unsubscribe();
     }
 
 

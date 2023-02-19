@@ -7,4 +7,6 @@ export const environment = {
     appName: pkg.name,
     appStoragePrefix: pkg.name.replace(/ /g, '_'),
     production: true,
+    development: false,
+    gaia_company_token: ''
 };

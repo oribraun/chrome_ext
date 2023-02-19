@@ -1,4 +1,7 @@
 // Script that opens an iframe to load the ng2 page
+if (typeof window.extentionLastEventListeners !== 'object') {
+    window.extentionLastEventListeners = {}
+}
 
 function createSidebar () {
     const backgroundColor = '#ccc';
@@ -151,17 +154,29 @@ function toggleSideBar() {
 
 var sidebar = document.getElementById('domain-tabs-sidebar');
 if (sidebar) {
+    var lastWindowClick = window.extentionLastEventListeners['window-click'];
+    var lastChromeMessage = window.extentionLastEventListeners['chrome-message'];
+    if (lastChromeMessage) {
+        chrome.runtime.onMessage.removeListener(lastChromeMessage);
+    }
+    if (lastWindowClick) {
+        window.removeEventListener('click', lastWindowClick, true);
+    }
     removeSidebar();
 } else {
     createSidebar ();
-    chrome.runtime.onMessage.removeListener(listenForMessagesFromExtension);
     chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
-    window.addEventListener('click', function(e) {
-        var side_bar = e.target.closest(".domain-tabs-sidebar-show");
-        if (!side_bar) {
-            hideSideBar();
-        }
-    })
+    window.addEventListener('click', windowOnClick, true);
+    window.extentionLastEventListeners['window-click'] = windowOnClick;
+    window.extentionLastEventListeners['chrome-message'] = listenForMessagesFromExtension;
+}
+
+function windowOnClick(e) {
+    console.log('window clicked')
+    var side_bar = e.target.closest(".domain-tabs-sidebar-show");
+    if (!side_bar) {
+        hideSideBar();
+    }
 }
 
 async function listenForMessagesFromExtension(request, sender, sendResponse) {

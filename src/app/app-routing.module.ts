@@ -4,6 +4,7 @@ import {LoginComponent} from "./components/login/login.component";
 import {AuthGuard} from "./guards/auth.guard";
 import {PrivacyModelComponent} from "./components/privacy-model/privacy-model.component";
 import {PromptUploaderComponent} from "./components/prompt-uploader/prompt-uploader.component";
+import {MainComponent} from "./components/main/main.component";
 
 const routes: Routes = [
     {
@@ -18,7 +19,9 @@ const routes: Routes = [
         path: 'options',
         loadChildren: () => import('./pages/options/options.module').then(m => m.OptionsModule)
     },
-    { path: '', component: PrivacyModelComponent, pathMatch : 'full', canActivate: [AuthGuard] },
+    { path: '', component: MainComponent, pathMatch : 'full', canActivate: [AuthGuard] },
+    // { path: ':page', component: MainComponent, pathMatch : 'full', canActivate: [AuthGuard] },
+    // { path: '', component: PrivacyModelComponent, pathMatch : 'full', canActivate: [AuthGuard] },
     { path: 'prompt-uploader', component: PromptUploaderComponent, pathMatch : 'full', canActivate: [AuthGuard] },
     { path: 'login', component: LoginComponent, pathMatch : 'full' },
     { path: 'login/:type', component: LoginComponent, pathMatch : 'full' },
@@ -31,7 +34,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forRoot(routes, { useHash: true, relativeLinkResolution: 'legacy' })],
+    imports: [RouterModule.forRoot(routes, { useHash: false, relativeLinkResolution: 'legacy' })],
     exports: [RouterModule]
 })
 export class AppRoutingModule { }

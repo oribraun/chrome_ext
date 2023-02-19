@@ -11,6 +11,7 @@ import {HttpClientModule} from "@angular/common/http";
 import { PrivacyModelComponent } from './components/privacy-model/privacy-model.component';
 import { PromptUploaderComponent } from './components/prompt-uploader/prompt-uploader.component';
 import { HeaderComponent } from './components/header/header.component';
+import { MainComponent } from './components/main/main.component';
 
 @NgModule({
     bootstrap: [AppComponent],
@@ -20,6 +21,7 @@ import { HeaderComponent } from './components/header/header.component';
         PrivacyModelComponent,
         PromptUploaderComponent,
         HeaderComponent,
+        MainComponent,
     ],
     imports: [
         BrowserModule,

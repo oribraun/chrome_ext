@@ -1,10 +1,12 @@
-<app-header></app-header>
 <div class="prompt-uploader container">
     <div class="headline-no-prompt">
         <h2 class="text-center">Upload txt file to inject</h2>
     </div>
     <div class="mb-3">
         <input class="form-control" id="formFileSm" type="file" (change)="fileChanged($event)">
+    </div>
+    <div class="error" *ngIf="fileUploadErr">
+        {{fileUploadErr}}
     </div>
     <div class="file-text" *ngIf="fileText">
         <h6 class="text-center">{{fileText.substring(0, 50) + '...'}}</h6>

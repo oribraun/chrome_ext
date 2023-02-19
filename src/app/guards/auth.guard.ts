@@ -16,25 +16,28 @@ export class AuthGuard implements CanActivate {
     canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-        return new Promise((resolve, reject) => {
-            this.config.user_subject.subscribe((user) => {
-                // console.log('this.config.user', this.config.user)
-                if (this.config.user) {
-                    resolve(true)
-                } else {
-                    this.router.navigate(['/login'])
-                    resolve(false)
-                }
-            })
-            setTimeout(() => {
-                // console.log('this.config.user', this.config.user)
-                if (this.config.user) {
-                    resolve(true)
-                } else {
-                    resolve(false)
-                }
-            })
-        })
+        // return new Promise((resolve, reject) => {
+        //     console.log('this.config.user',this.config.user)
+        //     this.config.user_subject.subscribe((user) => {
+        //         console.log('this.config.user - user_subject',this.config.user)
+        //         if (this.config.user) {
+        //             resolve(true)
+        //         } else {
+        //             this.router.navigate(['/login'])
+        //             resolve(false)
+        //         }
+        //     })
+        //     setTimeout(() => {
+        //         console.log('this.config.user - setTimeout',this.config.user)
+        //         if (this.config.user) {
+        //             resolve(true)
+        //         } else {
+        //             this.router.navigate(['/login'])
+        //             resolve(false)
+        //         }
+        //     }, 200)
+        // })
+        // return true;
         // this.config.user_subject.subscribe((user) => {
         //     console.log('user', user)
         //     if (this.config.user) {
@@ -45,11 +48,13 @@ export class AuthGuard implements CanActivate {
         //         return false;
         //     }
         // })
-        // if (this.config.user) {
-        //     return true;
-        // } else {
-        //     return false;
-        // }
+        // console.log('this.config.user', this.config.user)
+        if (this.config.user) {
+            return true;
+        } else {
+            this.router.navigate(['/login'])
+            return false;
+        }
     }
 
 }

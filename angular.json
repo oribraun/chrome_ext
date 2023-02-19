@@ -30,7 +30,8 @@
               "src/favicon.ico",
               "src/assets",
               "src/extension",
-              "src/manifest.json"
+              "src/manifest.json",
+              "src/managed_schema.json"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",

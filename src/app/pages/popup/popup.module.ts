@@ -8,6 +8,9 @@ import { PopupRoutingModule } from './popup-routing.module';
     declarations: [
         PopupComponent
     ],
+    exports: [
+        PopupComponent
+    ],
     imports: [
         CommonModule,
         SharedModule,

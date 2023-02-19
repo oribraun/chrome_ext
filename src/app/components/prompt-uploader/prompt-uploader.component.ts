@@ -9,6 +9,7 @@ import {ChromeExtensionService} from "../../services/chrome-extension.service";
 export class PromptUploaderComponent implements OnInit {
     fileText = ''
     fileName = ''
+    fileUploadErr = ''
     constructor(
         private chromeExtensionService: ChromeExtensionService
     ) { }
@@ -18,6 +19,7 @@ export class PromptUploaderComponent implements OnInit {
     }
 
     fileChanged(e: any) {
+        this.fileUploadErr = '';
         if (e.target.files && e.target.files.length) {
             this.fileText = ''
             this.fileName = ''
@@ -26,6 +28,8 @@ export class PromptUploaderComponent implements OnInit {
             console.log('type', file.name);
             if (file.type === 'text/plain') {
                 this.readFile(e, file)
+            } else {
+                this.fileUploadErr = 'please upload txt file only';
             }
         }
     }

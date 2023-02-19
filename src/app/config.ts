@@ -1,9 +1,14 @@
 import {Subject} from "rxjs";
+import * as CryptoJS from 'crypto-js';
+
+const key = "My Secret Passphrase";
 
 export class Config {
     private _user: any = '';
     private _server_host: string = '';
     private _server_host_subject: Subject<any> = new Subject<any>();
+    private _is_company = false;
+    private _is_company_subject: Subject<any> = new Subject<any>();
     private _token: string = '';
     private _csrf_token: string = '';
     private _user_subject: Subject<any> = new Subject<any>();
@@ -34,6 +39,23 @@ export class Config {
 
     set server_host_subject(value: Subject<any>) {
         this._server_host_subject = value;
+    }
+
+    get is_company(): boolean {
+        return this._is_company;
+    }
+
+    set is_company(value: boolean) {
+        this._is_company = value;
+        this._is_company_subject.next(this.is_company)
+    }
+
+    get is_company_subject(): Subject<any> {
+        return this._is_company_subject;
+    }
+
+    set is_company_subject(value: Subject<any>) {
+        this._is_company_subject = value;
     }
 
     get token(): string {
@@ -84,13 +106,21 @@ export class Config {
         this.csrf_token = '';
     }
 
-    getCookie(name: string): Promise<string> {
+    getCookie(name: string, decrypt=false): Promise<string> {
         return new Promise((resolve, reject) => {
             if (!chrome.cookies) {
                 const value = `; ${document.cookie}`;
                 const parts: any = value.split(`; ${name}=`);
                 if (parts && parts.length === 2) {
-                    resolve(parts.pop().split(';').shift());
+                    let val = parts.pop().split(';').shift();
+                    if (decrypt) {
+                        try {
+                            val = this.Decrypt(val, key);
+                        } catch (err) {
+                            val = '';
+                        }
+                    }
+                    resolve(val);
                 } else {
                     resolve('');
                 }
@@ -100,7 +130,15 @@ export class Config {
                     name: name
                 }, (cookie) => {
                     if(cookie) {
-                        resolve(cookie.value)
+                        let val = cookie.value;
+                        if (decrypt) {
+                            try {
+                                val = this.Decrypt(val, key);
+                            } catch (err) {
+                                val = '';
+                            }
+                        }
+                        resolve(val)
                     } else {
                         resolve('')
                     }
@@ -110,17 +148,25 @@ export class Config {
         });
     }
 
-    setCookie(name: string, val: string, exp: Date) {
+    setCookie(name: string, val: string, exp: Date, encrypt=false) {
+        let final_val = val;
+        if (encrypt && val) {
+            try {
+                final_val = this.Encrypt(val, key).toString()
+            } catch (err) {
+                final_val = val;
+            }
+        }
         return new Promise((resolve, reject) => {
             if (!chrome.cookies) {
-                var c_value = val + "; expires=" + exp.toUTCString();
+                var c_value = final_val + "; expires=" + exp.toUTCString();
                 document.cookie = name + "=" + c_value;
                 resolve(1)
             } else {
                 chrome.cookies.set({
                     url: 'https://chat.openai.com',
                     name: name,
-                    value: val,
+                    value: final_val,
                     expirationDate: exp.getTime()
                 }, (cookie) => {
                     resolve(cookie);
@@ -129,6 +175,18 @@ export class Config {
 
             }
         })
+    }
+
+    Encrypt(word: string, key = 'share') {
+        let encJson = CryptoJS.AES.encrypt(JSON.stringify(word), key).toString()
+        let encData = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(encJson))
+        return encData
+    }
+
+    Decrypt(word: string, key = 'share') {
+        let decData = CryptoJS.enc.Base64.parse(word).toString(CryptoJS.enc.Utf8)
+        let bytes = CryptoJS.AES.decrypt(decData, key).toString(CryptoJS.enc.Utf8)
+        return JSON.parse(bytes)
     }
 
     resetCookies() {

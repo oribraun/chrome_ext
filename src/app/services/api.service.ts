@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Config} from "../config";
 import {environment} from "@environment";
+import {ChromeExtensionService} from "./chrome-extension.service";
 
 @Injectable({
     providedIn: 'root'
@@ -13,10 +14,10 @@ export class ApiService {
     headers: any = {}
     constructor(
         private http: HttpClient,
+        private chromeExtensionService: ChromeExtensionService,
         private config: Config
     ) {
         console.log('init api service')
-        this.headers['TEMBEL-AI-TOKEN'] = 'user token test'
         this.config.csrf_token_subject.subscribe((csrf_token) => {
             console.log('csrf_token', csrf_token)
             this.headers['X-CSRFToken'] = csrf_token;
@@ -39,6 +40,14 @@ export class ApiService {
             // }
             // }
         })
+
+        // this.chromeExtensionService.getCompanyApiKey().then((api_key) => {
+        //     this.headers['GAIA-AI-TOKEN'] = api_key;
+        //     this.config.is_company = true;
+        // }).catch((err) => {
+        //     console.log('no api key')
+        // })
+        // this.setUpGaiaKeyForLocal();
     }
 
     login(email: string, username: string, password: string) {
@@ -101,4 +110,17 @@ export class ApiService {
             {headers: this.headers}
         )
     }
+
+    collectUserPrompt(prompt: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'collect-user-prompt', {'prompt': prompt},
+            {headers: this.headers}
+        )
+    }
+
+    // setUpGaiaKeyForLocal() {
+    //     if (environment.development) {
+    //         this.headers['GAIA-AI-TOKEN'] = environment.gaia_company_token;
+    //         this.config.is_company = true;
+    //     }
+    // }
 }
