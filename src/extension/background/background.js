@@ -1,21 +1,41 @@
 chrome.action.onClicked.addListener(function(tab) {
-    injectSideMenuWithAngular(tab.id);
-    var url =  new URL(tab.url);
-    injectContentHostScript(tab.id, url.hostname)
+    if (tab.url && !tab.url.startsWith("chrome://")) {
+        injectSideMenuWithAngular(tab.id);
+        var url = new URL(tab.url);
+        injectContentHostScript(tab.id, url.hostname)
+    }
 })
 
 // inject sidebar and chat gpt scripts when page loaded
+// chrome.tabs.onUpdated.addListener(function (tabId , info, tab) {
+//     if (info.status === 'complete') {
+//         console.log('onUpdated complete event', info)
+//         if (tab.url && !tab.url.startsWith("chrome://")) {
+//             injectSideMenuWithAngular(tab.id);
+//             console.log('tabId1', tabId)
+//         //     var url = new URL(tab.url);
+//         //     injectContentHostScript(tab.id, url.hostname)
+//         }
+//     }
+// });
 chrome.webNavigation.onCompleted.addListener(function(event) {
-    if (event.url && event.tabId) {
-        try {
-            var url =  new URL(event.url);
-            injectContentHostScript(event.tabId, url.hostname)
-            // when detecting page inject side menu as well
-            injectSideMenuWithAngular(event.tabId);
+    if (event.frameType === 'outermost_frame') {
+        if (event.url && event.tabId) {
+            if (!event.url.startsWith("chrome://")) {
+                try {
+                    var url = new URL(event.url);
+                    injectContentHostScript(event.tabId, url.hostname)
+                    // when detecting page inject side menu as well
+                    injectSideMenuWithAngular(event.tabId);
+                } catch (e) {
+                    return e;
+                }
+            }
         }
-        catch(e) { return e; }
     }
-}, {url: [{urlMatches : 'https://chat.openai.com/chat'}]});
+}, {
+    // url: [{urlMatches : 'https://chat.openai.com/chat'}]
+});
 
 chrome.runtime.onInstalled.addListener(function (object) {
     // let externalUrl = "http://yoursite.com/";
@@ -26,34 +46,40 @@ chrome.runtime.onInstalled.addListener(function (object) {
             console.log("New tab launched");
         });
     }
+    setUpChromeMenuOption();
 });
 
 function injectSideMenuWithAngular(tab_id) {
     chrome.scripting.executeScript({
-        target: {tabId: tab_id, allFrames: true},
+        target: {tabId: tab_id, allFrames: false},
         files: [
             'extension/scripts/side_menu.js'
         ]
-    });
+    }).then(() => console.log("script injected in one frame"));
     chrome.scripting.insertCSS({
-        target: { tabId: tab_id, allFrames: true },
+        target: { tabId: tab_id, allFrames: false},
         files: ["extension/scripts/side_menu.css"]
-    });
+    }).then(() => console.log("css injected in one frame"));
 }
 
 function injectContentHostScript(tab_id, host) {
-    chrome.scripting.executeScript({
-        target: {tabId: tab_id, allFrames: true},
-        files: [
-            'extension/inject_to_page/' + host + '/script.js'
-        ]
-    });
-    chrome.scripting.insertCSS({
-        target: { tabId: tab_id, allFrames: true },
-        files: [
-            'extension/inject_to_page/' + host + '/script.css'
-        ]
-    });
+    let url = chrome.runtime.getURL('extension/inject_to_page/' + host + '/script.js');
+    fetch(url).then((res) => {
+        chrome.scripting.executeScript({
+            target: {tabId: tab_id, allFrames: false},
+            files: [
+                'extension/inject_to_page/' + host + '/script.js'
+            ]
+        });
+        chrome.scripting.insertCSS({
+            target: { tabId: tab_id, allFrames: false},
+            files: [
+                'extension/inject_to_page/' + host + '/script.css'
+            ]
+        });
+    }, (err) => {
+
+    })
 }
 
 function sendHostNameToContentScript(tab_id, host) {
@@ -120,9 +146,9 @@ function sendHostNameToContentScript(tab_id, host) {
 // });
 
 chrome.identity.getProfileUserInfo(async function(userInfo) {
-    console.log('userInfo.email', userInfo.email)
+    // console.log('userInfo.email', userInfo.email)
     var domain = userInfo.email.substring(userInfo.email.indexOf('@') + 1);
-    console.log('domain', domain)
+    // console.log('domain', domain)
     // var auth = new google.auth.GoogleAuth({
     //     scopes: ['https://www.googleapis.com/auth/admin.directory.domain.readonly']
     // });
@@ -131,3 +157,51 @@ chrome.identity.getProfileUserInfo(async function(userInfo) {
     // var response = await admin.domains.get({domainName: domain});
     // console.log(response.data);
 });
+
+function setUpChromeMenuOption() {
+    // var parent = chrome.contextMenus.create({"title": "Gaia", "id": "gaiaMain"});
+    // var child1 = chrome.contextMenus.create(
+    //     {"title": "Summarize:", "parentId": parent, "contexts": ["selection"], "id": "gaiaSummarize"});
+    // var child2 = chrome.contextMenus.create(
+    //     {"title": "Ask:", "parentId": parent, "contexts": ["selection"], "id": "gaiaAsk"});
+    chrome.contextMenus.create({
+        title: 'Gaia',
+        // "title": 'Gaia To Chat "%s"',
+        "contexts": ["selection"],
+        id: "gaiaMain"
+    });
+    chrome.contextMenus.create({
+        title: 'Summarize: "%s"',
+        // "title": 'Gaia To Chat "%s"',
+        "contexts": ["selection"],
+        parentId: "gaiaMain",
+        id: "gaiaSummarize"
+    });
+    chrome.contextMenus.create({
+        title: 'Ask: "%s"',
+        // "title": 'Gaia To Chat "%s"',
+        "contexts": ["selection"],
+        parentId: "gaiaMain",
+        id: "gaiaAsk"
+    });
+    // chrome.contextMenus.create({
+    //     "title": 'Send To Chat "%s"',
+    //     "contexts": ["selection"],
+    //     "id": "myContextMenuId"
+    // });
+    // chrome.contextMenus.create({
+    //     "title": 'Send To Chat "%s"',
+    //     "contexts": ["selection"],
+    //     "id": "myContextMenuId"
+    // });
+}
+
+chrome.contextMenus.onClicked.addListener(function(info, tab) {
+    let text = info.selectionText;
+    if (info.menuItemId === 'gaiaSummarize') {
+        text = 'Summarize:\n ' + text;
+    } else if (info.menuItemId === 'gaiaAsk') {
+        text = 'Ask:\n ' + text;
+    }
+    chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
+})

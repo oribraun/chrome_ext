@@ -1,5 +1,7 @@
 import {Subject} from "rxjs";
 import * as CryptoJS from 'crypto-js';
+import { Storage } from "./storage";
+
 
 const key = "My Secret Passphrase";
 
@@ -125,8 +127,12 @@ export class Config {
                     resolve('');
                 }
             } else {
+                let url = '';
+                if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
+                    url = window.location.ancestorOrigins[0];
+                }
                 chrome.cookies.get({
-                    url: 'https://chat.openai.com',
+                    url: url,
                     name: name
                 }, (cookie) => {
                     if(cookie) {
@@ -143,6 +149,12 @@ export class Config {
                         resolve('')
                     }
                     // console.log('get cookie from extension', cookie)
+                })
+                chrome.cookies.get({
+                    url: 'https://chat.openai.com',
+                    name: 'csrftoken'
+                }, (cookie) => {
+                    console.log('cookie', cookie)
                 })
             }
         });
@@ -163,11 +175,15 @@ export class Config {
                 document.cookie = name + "=" + c_value;
                 resolve(1)
             } else {
+                let url = '';
+                if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
+                    url = window.location.ancestorOrigins[0];
+                }
                 chrome.cookies.set({
-                    url: 'https://chat.openai.com',
+                    url: url,
                     name: name,
                     value: final_val,
-                    expirationDate: exp.getTime()
+                    expirationDate: exp.getTime()/1000
                 }, (cookie) => {
                     resolve(cookie);
                     // console.log('set cookie from extension', cookie)
@@ -195,6 +211,50 @@ export class Config {
         this.setCookie('user', '', exp);
         this.setCookie('token', '', exp);
         this.setCookie('csrftoken', '', exp);
+    }
+
+    getStorage(name: string, decrypt=false): Promise<string> {
+        return new Promise((resolve, reject) => {
+            return Storage.get(name).then((res: any) => {
+                let results = res[name]
+                if (decrypt && results) {
+                    results = this.Decrypt(results, key)
+                }
+                resolve(results);
+            }).catch(() => {
+                resolve('');
+            })
+        })
+    }
+
+    setStorage(name: string, val: string, exp: Date, encrypt=false) {
+        return new Promise((resolve, reject) => {
+            if (encrypt) {
+                val = this.Encrypt(val, key)
+            }
+            return Storage.set(name, val).then(() => {
+                resolve(1);
+            }).catch(() => {
+                resolve(0);
+            })
+        })
+    }
+
+    removeStorage(name: string) {
+        return new Promise((resolve, reject) => {
+            return Storage.remove(name).then(() => {
+                resolve(1);
+            }).catch(() => {
+                resolve(0);
+            })
+        })
+    }
+
+
+    resetStorage() {
+        this.removeStorage('user');
+        this.removeStorage('token');
+        this.removeStorage('csrftoken');
     }
 
     hostToName() {

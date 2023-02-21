@@ -22,7 +22,7 @@ const routes: Routes = [
     { path: '', component: MainComponent, pathMatch : 'full', canActivate: [AuthGuard] },
     // { path: ':page', component: MainComponent, pathMatch : 'full', canActivate: [AuthGuard] },
     // { path: '', component: PrivacyModelComponent, pathMatch : 'full', canActivate: [AuthGuard] },
-    { path: 'prompt-uploader', component: PromptUploaderComponent, pathMatch : 'full', canActivate: [AuthGuard] },
+    // { path: 'prompt-uploader', component: PromptUploaderComponent, pathMatch : 'full', canActivate: [AuthGuard] },
     { path: 'login', component: LoginComponent, pathMatch : 'full' },
     { path: 'login/:type', component: LoginComponent, pathMatch : 'full' },
     // { path: 'privacy-model', component: PrivacyModelComponent, pathMatch : 'full', canActivate: [AuthGuard] },

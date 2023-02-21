@@ -8,7 +8,7 @@
     "default_title": "Gaia"
   },
   "host_permissions": [
-    "https://chat.openai.com/chat"
+   "http://*/*", "https://*/*"
   ],
   "options_page": "index.html?#/options",
   "background": {
@@ -30,6 +30,7 @@
     "tabs",
     "cookies",
     "webNavigation",
+    "contextMenus",
     "identity"
   ],
   "icons": {

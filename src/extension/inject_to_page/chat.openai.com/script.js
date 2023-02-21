@@ -205,14 +205,21 @@ function testFetchingLocalApiKey() {
 if (typeof window.extentionLastEventListeners !== 'object') {
     window.extentionLastEventListeners = {}
 }
-
+var inject = false;
+if (window.location.href.indexOf('https://chat.openai.com/chat') > -1) {
+    inject = true;
+}
 if (document.readyState === "complete") {
-    onInitAngular(true);
+    if (inject) {
+        onInitAngular(true);
+    }
 } else {
     var loadfunction = window.onload;
     window.onload = function (event) {
         //enter here the action you want to do once loaded
-        onInitAngular(true);
+        if (inject) {
+            onInitAngular(true);
+        }
         if (loadfunction) loadfunction(event);
     }
 }

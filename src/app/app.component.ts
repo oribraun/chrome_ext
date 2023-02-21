@@ -29,6 +29,26 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
     async setupCredsFromStorage() {
+        console.log('setupCredsFromStorage')
+        const user = await this.config.getStorage('user', true);
+        if (user) {
+            this.config.user = JSON.parse(user);
+            this.user = this.config.user;
+            this.config.is_company = this.user.company_name
+        } else {
+            this.config.user_subject.next('');
+        }
+        const token = await this.config.getStorage('token', true);
+        if (token) {
+            this.config.token = token;
+        }
+        this.config.user_subject.subscribe((user) => {
+            this.user = this.config.user;
+            this.config.is_company = this.user.company_name
+        })
+    }
+
+    async setupCredsFromCookies() {
         // if (typeof STATIC_URL !== 'undefined' && STATIC_URL !== "{% static 'client/' %}") {
         //   this.config.staticServerPath = STATIC_URL;
         // }
@@ -41,7 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // if (typeof TOKEN !== 'undefined' && TOKEN !== '{{ csrf_token }}') {
         //     this.config.csrf_token = TOKEN;
         // }
-        console.log('setupCredsFromStorage')
+        console.log('setupCredsFromCookies')
         const user = await this.config.getCookie('user', true);
         if (user) {
             this.config.user = JSON.parse(user);
@@ -50,10 +70,10 @@ export class AppComponent implements OnInit, OnDestroy {
         } else {
             this.config.user_subject.next('');
         }
-        const csrftoken = await this.config.getCookie('csrftoken', true);
-        if (csrftoken) {
-            this.config.csrf_token = csrftoken;
-        }
+        // const csrftoken = await this.config.getCookie('csrftoken', true);
+        // if (csrftoken) {
+        //     this.config.csrf_token = csrftoken;
+        // }
         const token = await this.config.getCookie('token', true);
         if (token) {
             this.config.token = token;

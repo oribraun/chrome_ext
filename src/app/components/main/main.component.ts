@@ -10,17 +10,24 @@ import {Config} from "../../config";
     styleUrls: ['./main.component.less']
 })
 export class MainComponent implements OnInit, OnDestroy {
-    allowUserPages = ['prompt-uploader']
+    allowUserPages = ['prompt-uploader', 'chat']
     allowCompanyPages = ['privacy-model']
     page = 'privacy-model'
 
     // privacy model config
     modelResults: any
+    chat: any = [
+        // {text: 'hi there'},
+        // {text: ''}
+    ]
+    chatLimit = 50;
+    sentQuestion = true;
     endPoint: any
     host: any
     user: any;
     resultsModelTest: any;
-    listener: any;
+    privacyModelListener: any;
+    getAnswerListener: any;
 
     //prompt upload config
     fileText = ''
@@ -75,7 +82,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     listenToChromeContentScriptMessages() {
-        this.listener = this.chromeExtensionService.ListenFor("privacy-model").subscribe((obj) => {
+        this.privacyModelListener = this.chromeExtensionService.ListenFor("privacy-model").subscribe((obj) => {
             // console.log('this.router.url',this.router.url)
             this.page = 'privacy-model';
             const request = obj.request;
@@ -92,7 +99,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.apiService.privacyModel(prompt, this.endPoint).subscribe(async (res) => {
                 this.modelResults = res;
                 this.forceBindChanges();
-                console.log('this.modelResults', this.modelResults)
+                // console.log('this.modelResults', this.modelResults)
                 if (this.modelResults.pass_privacy) {
                     this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
                 } else {
@@ -104,11 +111,56 @@ export class MainComponent implements OnInit, OnDestroy {
                 }
                 if (err.status === 401) {
                     // Unauthorized
-                    this.config.resetCookies();
-                    this.config.resetUserCreds();
-                    this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+                    // this.config.resetCookies();
+                    // this.config.resetUserCreds();
+                    // this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+                    // this.chromeExtensionService.showSidebar();
+                    // this.router.navigate(['/login']);
+                }
+                console.log('err', err)
+            })
+            sendResponse({success: true});
+        })
+        this.getAnswerListener = this.chromeExtensionService.ListenFor("chat").subscribe((obj) => {
+            // console.log('this.router.url',this.router.url)
+            this.page = 'chat';
+            const request = obj.request;
+            const sender = obj.sender;
+            const sendResponse = obj.sendResponse;
+            const text = request.text;
+            if (!this.config.is_company) {
+                sendResponse({success: false, message: 'unauthorized'});
+                 return;
+             }
+            // this.resetModelResults();
+            this.chat.push({text:text})
+            this.chat.push({text:''})
+            this.sentQuestion = true;
+            this.forceBindChanges();
+            this.scrollToBottom();
+
+            this.chromeExtensionService.showSidebar();
+
+            this.apiService.getAnswer(text).subscribe(async (res: any) => {
+                this.sentQuestion = false;
+                if (res && res.data) {
+                    this.limitAnswers()
+                    this.chat[this.chat.length - 1].text = res.data.answer;
                     this.chromeExtensionService.showSidebar();
-                    this.router.navigate(['/login']);
+                    this.scrollToBottom();
+                }
+                this.forceBindChanges();
+            }, (err) => {
+                if (err.status === 403) {
+                    // Forbidden - not exist
+                }
+                if (err.status === 401) {
+                    // Unauthorized
+                    // this.config.resetCookies();
+                    // this.config.resetUserCreds();
+                    // this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+                    // this.chromeExtensionService.showSidebar();
+                    // this.router.navigate(['/login']);
                 }
                 console.log('err', err)
             })
@@ -128,12 +180,12 @@ export class MainComponent implements OnInit, OnDestroy {
                 }
                 if (err.status === 401) {
                     // Unauthorized
-                    console.log('Unauthorized')
-                    this.config.resetCookies();
-                    this.config.resetUserCreds();
-                    this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-                    this.chromeExtensionService.showSidebar();
-                    this.router.navigate(['/login']);
+                    // console.log('Unauthorized')
+                    // this.config.resetCookies();
+                    // this.config.resetUserCreds();
+                    // this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+                    // this.chromeExtensionService.showSidebar();
+                    // this.router.navigate(['/login']);
                 }
             }
             console.log('err', err)
@@ -167,6 +219,16 @@ export class MainComponent implements OnInit, OnDestroy {
         if (chrome.runtime) {
             this.ref.detectChanges();
         }
+    }
+
+    limitAnswers() {
+        if (this.chat.length > this.chatLimit) {
+            this.chat.shift();
+        }
+    }
+
+    scrollToBottom() {
+        window.scrollTo(0, document.body.scrollHeight);
     }
 
 
@@ -227,7 +289,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.listener.unsubscribe();
+        this.privacyModelListener.unsubscribe();
     }
 
 

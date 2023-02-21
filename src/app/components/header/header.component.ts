@@ -42,6 +42,7 @@ export class HeaderComponent implements OnInit {
         e.preventDefault();
         const response = await this.apiService.logout().toPromise();
         this.config.resetCookies();
+        this.config.resetStorage();
         this.config.resetUserCreds();
         this.router.navigate(['/login'])
     }

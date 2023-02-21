@@ -7,11 +7,12 @@ import { CoreModule } from './core/core.module';
 import {LoginComponent} from "./components/login/login.component";
 import {FormsModule} from "@angular/forms";
 import {Config} from "./config";
-import {HttpClientModule} from "@angular/common/http";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import { PrivacyModelComponent } from './components/privacy-model/privacy-model.component';
 import { PromptUploaderComponent } from './components/prompt-uploader/prompt-uploader.component';
 import { HeaderComponent } from './components/header/header.component';
 import { MainComponent } from './components/main/main.component';
+import {CustomInterceptor} from "./components/custom-interceptor";
 
 @NgModule({
     bootstrap: [AppComponent],
@@ -32,7 +33,12 @@ import { MainComponent } from './components/main/main.component';
         CoreModule
     ],
     providers: [
-        Config
+        Config,
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: CustomInterceptor ,
+            multi: true
+        }
     ],
 })
 export class AppModule {}

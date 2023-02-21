@@ -14,7 +14,8 @@
             <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>
         </div>
         <div class="headline-no-prompt" *ngIf="!modelResults">
-            <h2 class="text-center">Start Using {{host}}</h2>
+<!--            <h2 class="text-center">Start Using {{host}}</h2>-->
+            <h2 class="text-center">Privacy Model</h2>
         </div>
         <div class="headline-with-prompt" *ngIf="modelResults">
             <h2 class="text-center">Privacy Model Results</h2>
@@ -77,6 +78,18 @@
             <div class="buttons" *ngIf="fileText">
                 <button id="continue_button" (click)="copyTextToPrompt()">Copy To Prompt</button>
             </div>
+        </div>
+    </div>
+</div>
+<div class="chat" *ngIf="page === 'chat'">
+    <h2 class="text-center">Chat</h2>
+    <div class="box" *ngFor="let item of chat; let i = index" [ngClass]="{'box-colored': i % 2}">
+        <span>
+            <i *ngIf="!(i % 2)" class="bi bi-person"></i>
+            <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
+        </span> {{item.text}}
+        <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
+            <span class="sr-only"></span>
         </div>
     </div>
 </div>

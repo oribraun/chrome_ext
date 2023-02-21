@@ -78,7 +78,7 @@ export class LoginComponent implements OnInit {
     async login() {
         try {
             this.loginErr = '';
-            const response: any = await lastValueFrom(this.apiService.login(this.email,this.email,this.password));
+            const response: any = await lastValueFrom(this.apiService.login(this.email,this.password));
             if (!response.err) {
                 const data = response.data;
                 this.setupUser(data);
@@ -128,21 +128,22 @@ export class LoginComponent implements OnInit {
         this.user = response;
         this.config.user = response.user;
         this.config.token = response.token;
-        this.setCookiesAfterLogin(response);
+        // this.setCookiesAfterLogin(response);
+        this.setStorageAfterLogin(response);
     }
 
     async setCookiesAfterLogin(response: any) {
-        const csrftoken = await this.config.getCookie('csrftoken', true)
+        // const csrftoken = await this.config.getCookie('csrftoken', true)
         const clientRunningOnServerHost = this.config.server_host === window.location.host;
-        // console.log('clientRunningOnServerHost', clientRunningOnServerHost)
-        if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
-            const csrftoken_exp = response.csrftoken_exp
-            const csrftoken = response.csrftoken
-            const d = new Date(csrftoken_exp)
-            this.config.setCookie('csrftoken', csrftoken, d, true).then(async () => {
-                this.config.csrf_token = await this.config.getCookie('csrftoken', true);
-            });
-        }
+        // // console.log('clientRunningOnServerHost', clientRunningOnServerHost)
+        // if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
+        //     const csrftoken_exp = response.csrftoken_exp
+        //     const csrftoken = response.csrftoken
+        //     const d = new Date(csrftoken_exp)
+        //     this.config.setCookie('csrftoken', csrftoken, d, true).then(async () => {
+        //         this.config.csrf_token = await this.config.getCookie('csrftoken', true);
+        //     });
+        // }
         const token = await this.config.getCookie('token', true)
         if (!token || !clientRunningOnServerHost) { // meaning it's not served by django server
             const csrftoken_exp = response.csrftoken_exp
@@ -159,19 +160,50 @@ export class LoginComponent implements OnInit {
             const user = response.user
             const d = new Date(csrftoken_exp)
             this.config.setCookie('user', JSON.stringify(user), d, true).then(async () => {
-                this.config.user = JSON.parse(await this.config.getCookie('user', true));
+                const u = await this.config.getCookie('user', true)
+                if (u) {
+                    this.config.user = JSON.parse(u);
+                }
             });
             // this.config.user = JSON.parse(this.config.getCookie('user'));
         }
     }
 
-    getCookie(name: string) {
-        const value = `; ${document.cookie}`;
-        const parts: any = value.split(`; ${name}=`);
-        if (parts && parts.length === 2) {
-            return parts.pop().split(';').shift();
-        } else {
-            return '';
+    async setStorageAfterLogin(response: any) {
+        // const csrftoken = await this.config.getCookie('csrftoken', true)
+        const clientRunningOnServerHost = this.config.server_host === window.location.host;
+        // // console.log('clientRunningOnServerHost', clientRunningOnServerHost)
+        // if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
+        //     const csrftoken_exp = response.csrftoken_exp
+        //     const csrftoken = response.csrftoken
+        //     const d = new Date(csrftoken_exp)
+        //     this.config.setCookie('csrftoken', csrftoken, d, true).then(async () => {
+        //         this.config.csrf_token = await this.config.getCookie('csrftoken', true);
+        //     });
+        // }
+        const token = await this.config.getStorage('token', true)
+        console.log('token', token)
+        if (!token || !clientRunningOnServerHost) { // meaning it's not served by django server
+            const csrftoken_exp = response.csrftoken_exp
+            const token = response.token
+            const d = new Date(csrftoken_exp)
+            this.config.setStorage('token', token, d, true).then(async () => {
+                this.config.token = await this.config.getStorage('token', true);
+            });
+        }
+
+        const user = await this.config.getStorage('user', true)
+        if (!user || !clientRunningOnServerHost) { // meaning it's not served by django server
+            const csrftoken_exp = response.csrftoken_exp
+            const user = response.user
+            const d = new Date(csrftoken_exp)
+            this.config.setStorage('user', JSON.stringify(user), d, true).then(async () => {
+                const u = await this.config.getStorage('user', true)
+                if (u) {
+                    this.config.user = JSON.parse(u);
+                }
+            });
+            // this.config.user = JSON.parse(this.config.getCookie('user'));
         }
     }
 

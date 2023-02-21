@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Config} from "../config";
 import {environment} from "@environment";
 import {ChromeExtensionService} from "./chrome-extension.service";
@@ -12,6 +12,16 @@ export class ApiService {
     baseApi = 'api/';
     baseApiAuth = 'api/auth/';
     headers: any = {}
+    private httpOptionsWithCreds = {
+        // headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        headers: new HttpHeaders(),
+        withCredentials: true // Whether this request should be sent with outgoing credentials
+    };
+    private httpOptionsWithoutCreds = {
+        // headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        headers: new HttpHeaders(),
+        withCredentials: false // Whether this request should be sent with outgoing credentials
+    };
     constructor(
         private http: HttpClient,
         private chromeExtensionService: ChromeExtensionService,
@@ -19,22 +29,25 @@ export class ApiService {
     ) {
         console.log('init api service')
         this.config.csrf_token_subject.subscribe((csrf_token) => {
-            console.log('csrf_token', csrf_token)
-            this.headers['X-CSRFToken'] = csrf_token;
+            // console.log('csrf_token', csrf_token)
+            // this.headers['X-CSRFToken'] = csrf_token;
         })
         this.config.token_subject.subscribe((token) => {
-            delete this.headers['Authorization']
+            this.httpOptionsWithCreds.headers.delete('Authorization');
+            this.httpOptionsWithoutCreds.headers.delete('Authorization');
             if (token) {
-                this.headers['Authorization'] = 'Token ' + token;
+                this.httpOptionsWithCreds.headers.set('Authorization', 'Token ' + token)
+                this.httpOptionsWithoutCreds.headers.set('Authorization', 'Token ' + token)
             }
         })
         this.config.token_subject.subscribe((token) => {
+            // console.log('asdfasf', token)
             // delete this.headers['Authorization']
             // if (!environment.production) {
-            delete this.headers['X-CSRFToken']
-            if (token) {
-                this.headers['X-CSRFToken'] = token;
-            }
+            // delete this.headers['X-CSRFToken']
+            // if (token) {
+            //     this.headers['X-CSRFToken'] = token;
+            // }
             // if (token) {
             //     this.headers['Authorization'] = 'Token ' + token;
             // }
@@ -50,12 +63,12 @@ export class ApiService {
         // this.setUpGaiaKeyForLocal();
     }
 
-    login(email: string, username: string, password: string) {
+    login(email: string, password: string) {
         return this.http.post(this.serverBase + this.baseApiAuth + 'login', {
                 email: email,
-                username: email,
                 password: password
             },
+            this.httpOptionsWithCreds
             // {headers: this.headers}
         )
     }
@@ -65,7 +78,8 @@ export class ApiService {
                 username: username,
                 password: password
             },
-            {headers: this.headers}
+            this.httpOptionsWithCreds
+            // {headers: this.headers}
         )
     }
 
@@ -73,12 +87,13 @@ export class ApiService {
         return this.http.post(this.serverBase + this.baseApiAuth + 'forgot-pass', {
                 email: email
             },
-            {headers: this.headers}
+            this.httpOptionsWithCreds
         )
     }
 
     logout() {
-        return this.http.post(this.serverBase + this.baseApiAuth + 'logout', {}, {headers: this.headers}
+        return this.http.post(this.serverBase + this.baseApiAuth + 'logout', {},
+            this.httpOptionsWithCreds
         )
     }
 
@@ -86,18 +101,18 @@ export class ApiService {
         return this.http.post(this.serverBase + this.baseApi + 'prompt_optimizer', {
                 prompt: prompt
             },
-            {headers: this.headers}
+            this.httpOptionsWithCreds
         )
     }
     upload(formData: FormData) {
         return this.http.post(this.serverBase + this.baseApi + 'upload', formData,
-            {headers: this.headers}
+            this.httpOptionsWithCreds
         )
     }
 
     analyze(filePath: string) {
         return this.http.post(this.serverBase + this.baseApi + 'analyze', {'file_path': filePath},
-            {headers: this.headers}
+            this.httpOptionsWithCreds
         )
     }
 
@@ -107,13 +122,19 @@ export class ApiService {
             url = endPoint;
         }
         return this.http.post(url, {'prompt': prompt},
-            {headers: this.headers}
+            this.httpOptionsWithCreds
         )
     }
 
     collectUserPrompt(prompt: string) {
         return this.http.post(this.serverBase + this.baseApi + 'collect-user-prompt', {'prompt': prompt},
-            {headers: this.headers}
+            this.httpOptionsWithCreds
+        )
+    }
+
+    getAnswer(prompt: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'get-answer', {'prompt': prompt},
+            this.httpOptionsWithCreds
         )
     }
 

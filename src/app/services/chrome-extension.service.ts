@@ -148,6 +148,7 @@ export class ChromeExtensionService {
     }
 
     showSidebar() {
+        console.log('show sidebar request sent')
         if (chrome.tabs) {
             this.sendMessageToContentScript('show-sidebar', {})
         }
