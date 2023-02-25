@@ -5,6 +5,7 @@ import {Config} from "../../config";
 import {lastValueFrom} from "rxjs";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
 import {Router} from "@angular/router";
+import {MyRouter} from "../my.router";
 
 @Component({
     selector: 'app-privacy-model',
@@ -23,7 +24,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
         private config: Config,
-        private router:Router,
+        private router:MyRouter,
         private ref:ChangeDetectorRef
     ) {
         // this.chromeListener = async (request: any, sender: any, sendResponse: any) => {

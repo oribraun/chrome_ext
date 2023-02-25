@@ -3,6 +3,7 @@ import {ActivatedRoute, ParamMap, Router} from "@angular/router";
 import {ApiService} from "../../services/api.service";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
 import {Config} from "../../config";
+import {MyRouter} from "../my.router";
 
 @Component({
     selector: 'app-main',
@@ -38,7 +39,7 @@ export class MainComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
         private config: Config,
-        private router:Router,
+        private router:MyRouter,
         private ref:ChangeDetectorRef
     ) { }
 

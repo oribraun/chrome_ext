@@ -3,6 +3,7 @@ import {ApiService} from "../../services/api.service";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
 import {Config} from "../../config";
 import {IsActiveMatchOptions, Router} from "@angular/router";
+import {MyRouter} from "../my.router";
 
 @Component({
     selector: 'app-header',
@@ -22,7 +23,7 @@ export class HeaderComponent implements OnInit {
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
         private config: Config,
-        private router:Router,
+        private router:MyRouter,
     ) { }
 
     ngOnInit(): void {

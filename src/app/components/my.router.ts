@@ -15,4 +15,7 @@ export class MyRouter {
         }
         return this.router.navigate(commands, extras);
     }
+    get url() {
+        return this.router.url;
+    }
 }
