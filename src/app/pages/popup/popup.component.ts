@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { BaseAbstract } from '@core/abstract/base.abstract';
 import {Router} from "@angular/router";
+import {MyRouter} from "../../components/my.router";
 
 @Component({
     selector: 'app-popup',
@@ -9,7 +10,7 @@ import {Router} from "@angular/router";
 })
 export class PopupComponent extends BaseAbstract {
     constructor(
-        router: Router
+        router: MyRouter
     ) {
         super(router);
         this.sendMessageToChromeInjectScript();

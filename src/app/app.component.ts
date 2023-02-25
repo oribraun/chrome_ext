@@ -20,6 +20,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        // this.apiService.public(''). subscribe((res) => {
+        //     console.log('res', res);
+        // })
         // setTimeout(() => {
         //     this.setupCredsFromStorage();
         // })
@@ -41,6 +44,11 @@ export class AppComponent implements OnInit, OnDestroy {
         const token = await this.config.getStorage('token', true);
         if (token) {
             this.config.token = token;
+        }
+        const csrftoken = await this.config.getCookie('csrftoken');
+        // console.log('csrftoken', csrftoken)
+        if (csrftoken) {
+            this.config.csrf_token = csrftoken;
         }
         this.config.user_subject.subscribe((user) => {
             this.user = this.config.user;
@@ -70,10 +78,10 @@ export class AppComponent implements OnInit, OnDestroy {
         } else {
             this.config.user_subject.next('');
         }
-        // const csrftoken = await this.config.getCookie('csrftoken', true);
-        // if (csrftoken) {
-        //     this.config.csrf_token = csrftoken;
-        // }
+        const csrftoken = await this.config.getCookie('csrftoken', true);
+        if (csrftoken) {
+            this.config.csrf_token = csrftoken;
+        }
         const token = await this.config.getCookie('token', true);
         if (token) {
             this.config.token = token;

@@ -8,6 +8,7 @@ function createSidebar () {
     var iFrame = document.createElement("iframe");
     iFrame.id = 'domain-tabs-sidebar-iframe';
     iFrame.src = chrome.runtime.getURL('index.html');
+    // iFrame.setAttribute('sandbox',"allow-scripts");
     // iFrame.style.backgroundColor = backgroundColor;
     // iFrame.scrolling = 'no';
     // iFrame.onmouseover = function() {
@@ -78,6 +79,8 @@ function addEvents() {
     newLeftArrow.addEventListener('mousedown', (e) => {
         startDrag = true;
         startPos = this.getPointerPos(e, false);
+        var el = document.getElementById('domain-tabs-sidebar-iframe')
+        el.classList.add('disable-pointer-events')
     })
     window.addEventListener('mousemove', (e) => {
         if (startDrag) {
@@ -99,8 +102,10 @@ function addEvents() {
             startPos = pos;
         }
     })
-    newLeftArrow.addEventListener('mouseup', (e) => {
+    window.addEventListener('mouseup', (e) => {
         if (startDrag) {
+            var el = document.getElementById('domain-tabs-sidebar-iframe')
+            el.classList.remove('disable-pointer-events')
             e.preventDefault();
             startDrag = false;
             startPos = null;
@@ -108,7 +113,7 @@ function addEvents() {
                 moveStarted = false;
             })
         }
-    })
+    }, true)
     newLeftArrow.addEventListener('click', () => {
         if (!moveStarted) {
             toggleSideBar();

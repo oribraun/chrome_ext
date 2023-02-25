@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { BaseAbstract } from '@core/abstract/base.abstract';
 import { Options, ThemeType } from '@models';
 import {Router} from "@angular/router";
+import {MyRouter} from "../../components/my.router";
 
 @Component({
     selector: 'app-options',
@@ -14,7 +15,7 @@ export class OptionsComponent extends BaseAbstract implements OnInit {
     public themeType: typeof ThemeType = ThemeType;
 
     constructor(
-        router: Router
+        router: MyRouter
     ) {
         super(router);
     }

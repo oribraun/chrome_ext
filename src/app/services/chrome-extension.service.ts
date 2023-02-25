@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, ReplaySubject, Subject} from "rxjs";
 import {Config} from "../config";
 import {Router} from "@angular/router";
+import {MyRouter} from "../components/my.router";
 
 @Injectable({
     providedIn: 'root'
@@ -18,7 +19,7 @@ export class ChromeExtensionService {
     private chromeRuntimeListener: any;
     constructor(
         private config: Config,
-        private router: Router
+        // private router: MyRouter
     ) {
         this.setUpChromeRuntimeListener()
     }
@@ -147,8 +148,8 @@ export class ChromeExtensionService {
         });
     }
 
-    showSidebar() {
-        console.log('show sidebar request sent')
+    showSidebar(from: string) {
+        console.log('show sidebar request sent - ' + from)
         if (chrome.tabs) {
             this.sendMessageToContentScript('show-sidebar', {})
         }

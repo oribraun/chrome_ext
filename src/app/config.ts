@@ -131,6 +131,7 @@ export class Config {
                 if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
                     url = window.location.ancestorOrigins[0];
                 }
+                console.log('cookies url', url)
                 chrome.cookies.get({
                     url: url,
                     name: name
@@ -150,12 +151,12 @@ export class Config {
                     }
                     // console.log('get cookie from extension', cookie)
                 })
-                chrome.cookies.get({
-                    url: 'https://chat.openai.com',
-                    name: 'csrftoken'
-                }, (cookie) => {
-                    console.log('cookie', cookie)
-                })
+                // chrome.cookies.get({
+                //     url: 'https://chat.openai.com',
+                //     name: 'csrftoken'
+                // }, (cookie) => {
+                //     console.log('cookie', cookie)
+                // })
             }
         });
     }

@@ -5,6 +5,7 @@ import {ApiService} from "../../services/api.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import {lastValueFrom} from "rxjs";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
+import {MyRouter} from "../my.router";
 
 @Component({
     selector: 'app-login',
@@ -26,16 +27,16 @@ export class LoginComponent implements OnInit {
         private config: Config,
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
-        private router: Router,
+        private router: MyRouter,
         private route: ActivatedRoute
     ) {
     }
 
     ngOnInit(): void {
-        this.checkUser();
         this.config.user_subject.subscribe((user) => {
             this.checkUser();
         })
+        this.checkUser(false);
         this.route.paramMap.subscribe((paramMap) => {
             const type = paramMap.get('type')
             if (type && this.formTypeOptions.indexOf(type) > -1) {
@@ -45,9 +46,11 @@ export class LoginComponent implements OnInit {
         // this.listenToChromeContentScriptMessages();
     }
 
-    checkUser() {
+    checkUser(showSidebar: boolean = true) {
         if (!this.config.user) {
-            this.chromeExtensionService.showSidebar();
+            if (showSidebar) {
+                this.chromeExtensionService.showSidebar('checkUser');
+            }
         } else {
             this.redirectFromLoginPage();
         }
@@ -134,7 +137,7 @@ export class LoginComponent implements OnInit {
 
     async setCookiesAfterLogin(response: any) {
         // const csrftoken = await this.config.getCookie('csrftoken', true)
-        const clientRunningOnServerHost = this.config.server_host === window.location.host;
+        const clientRunningOnServerHost = this.config.server_host === window.location.origin + '/';
         // // console.log('clientRunningOnServerHost', clientRunningOnServerHost)
         // if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
         //     const csrftoken_exp = response.csrftoken_exp
@@ -171,8 +174,8 @@ export class LoginComponent implements OnInit {
 
     async setStorageAfterLogin(response: any) {
         // const csrftoken = await this.config.getCookie('csrftoken', true)
-        const clientRunningOnServerHost = this.config.server_host === window.location.host;
-        // // console.log('clientRunningOnServerHost', clientRunningOnServerHost)
+        const clientRunningOnServerHost = this.config.server_host === window.location.host + '/';
+        console.log('clientRunningOnServerHost', clientRunningOnServerHost)
         // if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
         //     const csrftoken_exp = response.csrftoken_exp
         //     const csrftoken = response.csrftoken
@@ -181,8 +184,17 @@ export class LoginComponent implements OnInit {
         //         this.config.csrf_token = await this.config.getCookie('csrftoken', true);
         //     });
         // }
+        const csrftoken = await this.config.getCookie('csrftoken')
+        if (!csrftoken || !clientRunningOnServerHost) { // meaning it's not served by django server
+            const csrftoken_exp = response.csrftoken_exp
+            const csrftoken = response.csrftoken
+            const d = new Date(csrftoken_exp)
+            this.config.setCookie('csrftoken', csrftoken, d).then(async () => {
+                this.config.csrf_token = await this.config.getCookie('csrftoken');
+            });
+        }
         const token = await this.config.getStorage('token', true)
-        console.log('token', token)
+        // console.log('token', token)
         if (!token || !clientRunningOnServerHost) { // meaning it's not served by django server
             const csrftoken_exp = response.csrftoken_exp
             const token = response.token

@@ -3,6 +3,7 @@ import { AppInjector } from '@core/configs/app-injector';
 import { OptionsService } from '@core/services/options.service';
 import { Subscription } from 'rxjs';
 import {Router} from "@angular/router";
+import {MyRouter} from "../../components/my.router";
 
 @Directive()
 export class BaseAbstract implements OnDestroy {
@@ -12,7 +13,7 @@ export class BaseAbstract implements OnDestroy {
     protected optionsService: OptionsService;
 
     constructor(
-        private router: Router
+        private router: MyRouter
     ) {
         this.optionsService = AppInjector.injector.get(OptionsService);
     }

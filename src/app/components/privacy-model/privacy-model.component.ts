@@ -118,7 +118,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
                 if (this.modelResults.pass_privacy) {
                     this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
                 } else {
-                    this.chromeExtensionService.showSidebar();
+                    this.chromeExtensionService.showSidebar('privacyModel');
                     // const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
                     // console.log('tab', tab)
                     // chrome.tabs.sendMessage(tab.id, {type: 'toggle-sidebar'}, (response) => {
@@ -137,7 +137,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
                     this.config.resetCookies();
                     this.config.resetUserCreds();
                     this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-                    this.chromeExtensionService.showSidebar();
+                    this.chromeExtensionService.showSidebar('privacyModel 401');
                     this.router.navigate(['/login']);
                 }
                 console.log('err', err)
@@ -206,7 +206,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
             const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
             const response = await chrome.tabs.sendMessage(tab.id, {type: 'copy-prompt', response: {prompt: this.modelResults.suggested_prompt}});
             console.log('content script got the message', response)
-            this.chromeExtensionService.showSidebar();
+            this.chromeExtensionService.showSidebar('copyPrompt');
         }
     }
 
@@ -235,7 +235,7 @@ export class PrivacyModelComponent implements OnInit, OnDestroy {
                     this.config.resetCookies();
                     this.config.resetUserCreds();
                     this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-                    this.chromeExtensionService.showSidebar();
+                    this.chromeExtensionService.showSidebar('testPrivacyModelApi');
                     this.router.navigate(['/login']);
                 }
             }

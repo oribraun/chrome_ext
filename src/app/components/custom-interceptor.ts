@@ -4,6 +4,7 @@ import {catchError, Observable, throwError} from "rxjs";
 import {Config} from "../config";
 import {ChromeExtensionService} from "../services/chrome-extension.service";
 import {Router} from "@angular/router";
+import {MyRouter} from "./my.router";
 
 @Injectable()
 export class CustomInterceptor implements HttpInterceptor {
@@ -11,7 +12,7 @@ export class CustomInterceptor implements HttpInterceptor {
     constructor(
         private config: Config,
         private chromeExtensionService: ChromeExtensionService,
-        private router: Router
+        private router: MyRouter
     ) {
     }
 
@@ -46,7 +47,7 @@ export class CustomInterceptor implements HttpInterceptor {
         this.config.resetUserCreds();
         if (chrome.tabs) {
             this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-            this.chromeExtensionService.showSidebar();
+            this.chromeExtensionService.showSidebar('clearAndRedirectToLogin');
         }
         this.router.navigate(['/login']);
     }

@@ -8,19 +8,28 @@ import {ChromeExtensionService} from "./chrome-extension.service";
     providedIn: 'root'
 })
 export class ApiService {
-    serverBase = 'http://localhost:8000/';
+    // serverBase = 'http://localhost:8000/';
+    // serverBase = 'http://ip.gaialabs.ai/';
+    // serverBase = 'http://13.230.184.34/';
+    // serverBase = 'http://13.112.220.195:8000/';
+    serverBase = environment.serverUrl;
     baseApi = 'api/';
     baseApiAuth = 'api/auth/';
     headers: any = {}
     private httpOptionsWithCreds = {
-        // headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-        headers: new HttpHeaders(),
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        // headers: new HttpHeaders(),
         withCredentials: true // Whether this request should be sent with outgoing credentials
     };
     private httpOptionsWithoutCreds = {
-        // headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-        headers: new HttpHeaders(),
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        // headers: new HttpHeaders(),
         withCredentials: false // Whether this request should be sent with outgoing credentials
+    };
+    private httpOptions: any = {
+        // headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        headers: {},
+        withCredentials: true // Whether this request should be sent with outgoing credentials
     };
     constructor(
         private http: HttpClient,
@@ -30,14 +39,20 @@ export class ApiService {
         console.log('init api service')
         this.config.csrf_token_subject.subscribe((csrf_token) => {
             // console.log('csrf_token', csrf_token)
-            // this.headers['X-CSRFToken'] = csrf_token;
+            // if (csrf_token) {
+            //     this.httpOptions.headers['X-CSRFToken'] = csrf_token;
+            // } else {
+            //     delete this.httpOptions.headers['X-CSRFToken'];
+            // }
         })
         this.config.token_subject.subscribe((token) => {
             this.httpOptionsWithCreds.headers.delete('Authorization');
             this.httpOptionsWithoutCreds.headers.delete('Authorization');
+            delete this.httpOptions.headers['Authorization'];
             if (token) {
                 this.httpOptionsWithCreds.headers.set('Authorization', 'Token ' + token)
                 this.httpOptionsWithoutCreds.headers.set('Authorization', 'Token ' + token)
+                this.httpOptions.headers['Authorization'] = 'Token ' + token;
             }
         })
         this.config.token_subject.subscribe((token) => {
@@ -68,7 +83,7 @@ export class ApiService {
                 email: email,
                 password: password
             },
-            this.httpOptionsWithCreds
+            this.httpOptions
             // {headers: this.headers}
         )
     }
@@ -78,7 +93,7 @@ export class ApiService {
                 username: username,
                 password: password
             },
-            this.httpOptionsWithCreds
+            this.httpOptions
             // {headers: this.headers}
         )
     }
@@ -87,13 +102,13 @@ export class ApiService {
         return this.http.post(this.serverBase + this.baseApiAuth + 'forgot-pass', {
                 email: email
             },
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
     logout() {
         return this.http.post(this.serverBase + this.baseApiAuth + 'logout', {},
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
@@ -101,18 +116,18 @@ export class ApiService {
         return this.http.post(this.serverBase + this.baseApi + 'prompt_optimizer', {
                 prompt: prompt
             },
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
     upload(formData: FormData) {
         return this.http.post(this.serverBase + this.baseApi + 'upload', formData,
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
     analyze(filePath: string) {
         return this.http.post(this.serverBase + this.baseApi + 'analyze', {'file_path': filePath},
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
@@ -122,19 +137,24 @@ export class ApiService {
             url = endPoint;
         }
         return this.http.post(url, {'prompt': prompt},
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
     collectUserPrompt(prompt: string) {
         return this.http.post(this.serverBase + this.baseApi + 'collect-user-prompt', {'prompt': prompt},
-            this.httpOptionsWithCreds
+            this.httpOptions
         )
     }
 
     getAnswer(prompt: string) {
         return this.http.post(this.serverBase + this.baseApi + 'get-answer', {'prompt': prompt},
-            this.httpOptionsWithCreds
+            this.httpOptions
+        )
+    }
+    public(prompt: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'public', {'prompt': prompt},
+            this.httpOptions
         )
     }
 

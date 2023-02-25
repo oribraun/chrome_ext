@@ -13,6 +13,7 @@ import { PromptUploaderComponent } from './components/prompt-uploader/prompt-upl
 import { HeaderComponent } from './components/header/header.component';
 import { MainComponent } from './components/main/main.component';
 import {CustomInterceptor} from "./components/custom-interceptor";
+import {MyRouter} from "./components/my.router";
 
 @NgModule({
     bootstrap: [AppComponent],
@@ -34,6 +35,7 @@ import {CustomInterceptor} from "./components/custom-interceptor";
     ],
     providers: [
         Config,
+        MyRouter,
         {
             provide: HTTP_INTERCEPTORS,
             useClass: CustomInterceptor ,

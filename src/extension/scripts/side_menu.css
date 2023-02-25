@@ -42,6 +42,9 @@
     -webkit-transform: none;
     background: var(--background);
 }
+#domain-tabs-sidebar .disable-pointer-events {
+    pointer-events: none;
+}
 #domain-tabs-sidebar-left-arrow {
     position: absolute;
     top: calc(50% - (var(--logo-width) / 2));

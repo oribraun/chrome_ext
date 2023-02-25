@@ -103,7 +103,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 if (this.modelResults.pass_privacy) {
                     this.chromeExtensionService.sendMessageToContentScript('privacy-model-response', res)
                 } else {
-                    this.chromeExtensionService.showSidebar();
+                    this.chromeExtensionService.showSidebar('privacyModel');
                 }
             }, (err) => {
                 if (err.status === 403) {
@@ -139,14 +139,14 @@ export class MainComponent implements OnInit, OnDestroy {
             this.forceBindChanges();
             this.scrollToBottom();
 
-            this.chromeExtensionService.showSidebar();
+            this.chromeExtensionService.showSidebar('getAnswerListener');
 
             this.apiService.getAnswer(text).subscribe(async (res: any) => {
                 this.sentQuestion = false;
                 if (res && res.data) {
                     this.limitAnswers()
                     this.chat[this.chat.length - 1].text = res.data.answer;
-                    this.chromeExtensionService.showSidebar();
+                    this.chromeExtensionService.showSidebar('getAnswerListener 2');
                     this.scrollToBottom();
                 }
                 this.forceBindChanges();
@@ -171,9 +171,11 @@ export class MainComponent implements OnInit, OnDestroy {
     testPrivacyModelApi() {
         this.apiService.privacyModel('test', this.endPoint).subscribe(async (res) => {
             this.resultsModelTest = true;
+            this.forceBindChanges();
             console.log('res', res)
         }, (err) => {
             this.resultsModelTest = false;
+            this.forceBindChanges();
             if (err) {
                 if (err.status === 403) {
                     // Forbidden - not exist
@@ -197,7 +199,7 @@ export class MainComponent implements OnInit, OnDestroy {
             const [tab]: any = await chrome.tabs.query({active: true, lastFocusedWindow: true});
             const response = await chrome.tabs.sendMessage(tab.id, {type: 'copy-prompt', response: {prompt: this.modelResults.suggested_prompt}});
             console.log('content script got the message', response)
-            this.chromeExtensionService.showSidebar();
+            this.chromeExtensionService.showSidebar('copyPrompt');
         }
     }
 
