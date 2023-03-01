@@ -21,7 +21,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; style-src 'self' 'unsafe-inline'"
+    "extension_pages": "frame-src https://*.firebaseapp.com https://*.google.com 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'"
   },
   "permissions": [
     "storage",
@@ -45,5 +45,14 @@
         "value": "your_api_key_here"
       }
     }
+  },
+  "oauth2": {
+    "client_id": "687079247846-8e8lhl2k88pfm6nbd36e5higdndq0vck.apps.googleusercontent.com",
+    "scopes": [
+      "profile",
+      "email",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
   }
 }

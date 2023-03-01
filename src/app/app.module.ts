@@ -14,6 +14,11 @@ import { HeaderComponent } from './components/header/header.component';
 import { MainComponent } from './components/main/main.component';
 import {CustomInterceptor} from "./components/custom-interceptor";
 import {MyRouter} from "./components/my.router";
+import { GoogleSignInDirective } from './directives/google-sign-in.directive';
+import { GoogleSigninComponent } from './components/auth/google-signin/google-signin.component';
+import { AngularFireModule } from '@angular/fire/compat';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import {environment} from "@environment";
 
 @NgModule({
     bootstrap: [AppComponent],
@@ -24,6 +29,7 @@ import {MyRouter} from "./components/my.router";
         PromptUploaderComponent,
         HeaderComponent,
         MainComponent,
+        GoogleSigninComponent,
     ],
     imports: [
         BrowserModule,
@@ -31,7 +37,9 @@ import {MyRouter} from "./components/my.router";
         FormsModule,
         HttpClientModule,
         AppRoutingModule,
-        CoreModule
+        CoreModule,
+        AngularFireModule.initializeApp(environment.firebaseConfig),
+        AngularFireAuthModule,
     ],
     providers: [
         Config,

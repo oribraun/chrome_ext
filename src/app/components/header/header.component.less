@@ -1,4 +1,6 @@
 .header {
+    position: relative;
+    padding: 0;
     .navbar-brand {
         font-size: 2em;
         margin: 0;
@@ -28,13 +30,92 @@
     .logo {
         position: relative;
         text-align: center;
-        width: 100%;
+        width: 90%;
+        margin: 0 auto;
         padding: 10px;
         box-sizing: border-box;
         img {
             position: relative;
             max-width: 500px;
             width: 100%;
+        }
+    }
+    .menu {
+        position: relative;
+        margin-bottom: 5px;
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            .menu-item {
+                position: relative;
+                .menu-link {
+                    text-decoration: none;
+                    color: inherit;
+                    transform: scale(1);
+                    display: block;
+                    transition: all .3s ease-in-out;
+                }
+                .active {
+                    color: #3371ba;
+                    //transform: scale(1.1);
+                }
+            }
+            .menu-separator {
+                position: relative;
+                font-size: .85em;
+            }
+            .menu-item-pull-right {
+                position: relative;
+            }
+        }
+        .menu-list-top {
+
+        }
+        .menu-list-bottom {
+            margin: 0 20px;
+        }
+    }
+    .absolute-menu {
+        position: absolute;
+        right: 0;
+        z-index: 1;
+        .menu-list {
+            justify-content: end;
+            .menu-item {
+                margin-left: 5px;
+            }
+        }
+    }
+}
+
+#settingsModal {
+    max-width: 100%;
+    .prompts {
+        position: relative;
+        .add {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 1.3em;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .input-wrapper {
+            position: relative;
+            input {
+                padding-right: 28px;
+            }
+            .remove {
+                position: absolute;
+                top: 0;
+                right: 0;
+                padding: 7px;
+                cursor: pointer;
+                z-index: 5;
+            }
         }
     }
 }

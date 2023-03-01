@@ -152,6 +152,24 @@ export class ApiService {
             this.httpOptions
         )
     }
+    getAnswerStreaming(prompt: string) {
+        this.httpOptions['responseType'] = 'text';
+        this.httpOptions['observe'] = 'events';
+        this.httpOptions['reportProgress'] = true;
+        return this.http.post(this.serverBase + this.baseApi + 'get-answer', {'prompt': prompt},
+            this.httpOptions
+        )
+    }
+    getGoogleToken(token: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'google/get-token', {'token': token},
+            this.httpOptions
+        )
+    }
+    verifyGoogleToken(prompt: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'google/verify-token', {'prompt': prompt},
+            this.httpOptions
+        )
+    }
     public(prompt: string) {
         return this.http.post(this.serverBase + this.baseApi + 'public', {'prompt': prompt},
             this.httpOptions

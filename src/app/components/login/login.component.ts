@@ -28,7 +28,7 @@ export class LoginComponent implements OnInit {
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
         private router: MyRouter,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
     ) {
     }
 
@@ -59,7 +59,7 @@ export class LoginComponent implements OnInit {
     redirectFromLoginPage() {
         if(this.config.user) {
             // setTimeout(() => {
-                this.router.navigate([''])
+            this.router.navigate([''])
             // })
         }
     }
@@ -106,7 +106,7 @@ export class LoginComponent implements OnInit {
                 this.router.navigate(['/'])
             } else {
                 if (Array.isArray(response.errMessage)) {
-                     this.loginErr = response.errMessage.join('</br>');
+                    this.loginErr = response.errMessage.join('</br>');
                 } else {
                     this.loginErr = response.errMessage;
                 }
@@ -218,5 +218,28 @@ export class LoginComponent implements OnInit {
             // this.config.user = JSON.parse(this.config.getCookie('user'));
         }
     }
+
+    // signInWithGoogle(): void {
+    //     this.authService.signIn(GoogleLoginProvider.PROVIDER_ID);
+    // }
+    //
+    // signOut(): void {
+    //     this.authService.signOut();
+    // }
+    //
+    // subscribeAuth() {
+    //     this.authService.authState.subscribe((socialUser) => {
+    //         const idToken = socialUser.idToken;
+    //         const id = socialUser.id;
+    //         const name = socialUser.name;
+    //         const email = socialUser.email;
+    //         const photoUrl = socialUser.photoUrl;
+    //         const firstName = socialUser.firstName;
+    //         const lastName = socialUser.lastName;
+    //         const provider = socialUser.provider; // GOOGLE
+    //         console.log('socialUser', socialUser)
+    //
+    //     });
+    // }
 
 }

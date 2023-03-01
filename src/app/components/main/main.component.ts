@@ -1,17 +1,21 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, ParamMap, Router} from "@angular/router";
 import {ApiService} from "../../services/api.service";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
 import {Config} from "../../config";
 import {MyRouter} from "../my.router";
+import {HttpEventType} from "@angular/common/http";
+import {Observable} from "rxjs";
 
+declare var $: any;
 @Component({
     selector: 'app-main',
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.less']
 })
 export class MainComponent implements OnInit, OnDestroy {
-    allowUserPages = ['prompt-uploader', 'chat']
+    @ViewChild('chat_results_scroll') chatResultsScroll: ElementRef;
+    allowUserPages = ['prompt-uploader', 'chat', 'settings']
     allowCompanyPages = ['privacy-model']
     page = 'privacy-model'
 
@@ -19,7 +23,7 @@ export class MainComponent implements OnInit, OnDestroy {
     modelResults: any
     chat: any = [
         // {text: 'hi there'},
-        // {text: ''}
+        // {text: ''},
     ]
     chatLimit = 50;
     sentQuestion = true;
@@ -29,11 +33,18 @@ export class MainComponent implements OnInit, OnDestroy {
     resultsModelTest: any;
     privacyModelListener: any;
     getAnswerListener: any;
+    chatRequestInProgress = false;
+    chatPrompt = '';
 
     //prompt upload config
     fileText = ''
     fileName = ''
     fileUploadErr = ''
+
+    chatGptNeedToRefreshToken = false;
+    chatGptCurrentMessage = '';
+
+    scrollInProgress = false;
 
     constructor(
         private apiService: ApiService,
@@ -63,9 +74,17 @@ export class MainComponent implements OnInit, OnDestroy {
             }
             if (array.indexOf(res.page) > -1) {
                 this.page = res.page;
+                if (this.page === 'chat') {
+                    setTimeout(() => {
+                        this.scrollToBottom();
+                    })
+                }
             }
 
         });
+
+        // this.trySendingMessageToPort()
+        this.ListenToChatGpt()
         // this.setPrivacyModelMockData();
     }
 
@@ -94,8 +113,8 @@ export class MainComponent implements OnInit, OnDestroy {
                 sendResponse({success: false, message: 'unauthorized'});
                 this.apiService.collectUserPrompt(prompt).subscribe();
                 this.forcePrompt();
-                 return;
-             }
+                return;
+            }
             this.resetModelResults();
             this.apiService.privacyModel(prompt, this.endPoint).subscribe(async (res) => {
                 this.modelResults = res;
@@ -124,6 +143,10 @@ export class MainComponent implements OnInit, OnDestroy {
         })
         this.getAnswerListener = this.chromeExtensionService.ListenFor("chat").subscribe((obj) => {
             // console.log('this.router.url',this.router.url)
+            if (this.chatRequestInProgress) {
+                return;
+            }
+            this.chatRequestInProgress = true;
             this.page = 'chat';
             const request = obj.request;
             const sender = obj.sender;
@@ -131,41 +154,83 @@ export class MainComponent implements OnInit, OnDestroy {
             const text = request.text;
             if (!this.config.is_company) {
                 sendResponse({success: false, message: 'unauthorized'});
-                 return;
-             }
+                return;
+            }
             // this.resetModelResults();
-            this.chat.push({text:text})
-            this.chat.push({text:''})
-            this.sentQuestion = true;
-            this.forceBindChanges();
-            this.scrollToBottom();
-
-            this.chromeExtensionService.showSidebar('getAnswerListener');
-
-            this.apiService.getAnswer(text).subscribe(async (res: any) => {
-                this.sentQuestion = false;
-                if (res && res.data) {
-                    this.limitAnswers()
-                    this.chat[this.chat.length - 1].text = res.data.answer;
-                    this.chromeExtensionService.showSidebar('getAnswerListener 2');
-                    this.scrollToBottom();
-                }
-                this.forceBindChanges();
-            }, (err) => {
-                if (err.status === 403) {
-                    // Forbidden - not exist
-                }
-                if (err.status === 401) {
-                    // Unauthorized
-                    // this.config.resetCookies();
-                    // this.config.resetUserCreds();
-                    // this.chromeExtensionService.sendMessageToContentScript('login-required', {})
-                    // this.chromeExtensionService.showSidebar();
-                    // this.router.navigate(['/login']);
-                }
-                console.log('err', err)
-            })
+            this.chatProcessPrompt(text)
+            // this.apiService.getAnswer(text).subscribe(async (res: any) => {
+            //     this.sentQuestion = false;
+            //     if (res && res.data) {
+            //         this.limitAnswers()
+            //         this.chat[this.chat.length - 1].text = res.data.answer;
+            //         this.chromeExtensionService.showSidebar('getAnswerListener 2');
+            //         this.scrollToBottom();
+            //     }
+            //     this.forceBindChanges();
+            // }, (err) => {
+            //     if (err.status === 403) {
+            //         // Forbidden - not exist
+            //     }
+            //     if (err.status === 401) {
+            //         // Unauthorized
+            //         // this.config.resetCookies();
+            //         // this.config.resetUserCreds();
+            //         // this.chromeExtensionService.sendMessageToContentScript('login-required', {})
+            //         // this.chromeExtensionService.showSidebar();
+            //         // this.router.navigate(['/login']);
+            //     }
+            //     console.log('err', err)
+            // })
             sendResponse({success: true});
+        })
+    }
+
+    chatProcessPrompt(text: string) {
+        this.chat.push({text:text})
+        this.chat.push({text:''})
+        this.sentQuestion = true;
+        this.scrollToBottom();
+        this.forceBindChanges();
+
+        this.chromeExtensionService.showSidebar('getAnswerListener');
+        // this.sendMessageToChatGpt(text);
+        // return;
+        const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
+        const answers: any = [];
+        this.chatPrompt = '';
+        this.apiService.getAnswerStreaming(text).subscribe((event: any) => {
+            if (this.sentQuestion) {
+                this.limitAnswers()
+            }
+            if (event.type === HttpEventType.DownloadProgress) {
+                const partialText = event.partialText
+                console.log('partialText', partialText)
+                answers.push(partialText);
+                this.chat[this.chat.length - 1].text =  partialText;
+                this.sentQuestion = false;
+            }
+            if (event.type === HttpEventType.Response) {
+                const body = event.body;
+                console.log('body', body)
+                answers.push(body);
+                this.chromeExtensionService.showSidebar('getAnswerListener 2');
+                this.chatRequestInProgress = false;
+                this.sentQuestion = false;
+            }
+            // console.log('answers', answers)
+            // if (!answers.length) {
+            //     this.chat[this.chat.length - 1].text =  'Something Went Wrong - Please Try Again';
+            // }
+            this.scrollToBottom();
+            this.forceBindChanges();
+        }, (err) => {
+            if (err.status === 403) {
+                // Forbidden - not exist
+            }
+            if (err.status === 401) {
+                // Unauthorized
+            }
+            console.log('err', err)
         })
     }
 
@@ -231,7 +296,19 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     scrollToBottom() {
-        window.scrollTo(0, document.body.scrollHeight);
+        console.log('scrollToBottom')
+        // if (!this.scrollInProgress) {
+            console.log('scrollToBottom2')
+            this.scrollInProgress = true;
+            if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
+                console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
+                $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
+                    this.scrollInProgress = false;
+                });
+            } else {
+                // window.scrollTo(0, document.body.scrollHeight);
+            }
+        // }
     }
 
 
@@ -291,10 +368,69 @@ export class MainComponent implements OnInit, OnDestroy {
         }
     }
 
+    uuidv4() {
+        // @ts-ignore
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+            (
+                c ^
+                (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+            ).toString(16)
+        );
+    };
+
+    createMessage(message: string) {
+        return {
+            action: "next",
+            messages: [{
+                id: this.uuidv4(),
+                role: "user",
+                content: {
+                    content_type: "text",
+                    parts: [message]
+                }
+            }],
+            model: "text-davinci-002-render",
+            parent_message_id: this.uuidv4()
+        }
+    }
+    trySendingMessageToPort() {
+        this.chatGptNeedToRefreshToken = false;
+        this.chromeExtensionService.sendMessageToChatGpt('Knock knock');
+    }
+    sendMessageToChatGpt(msg: string) {
+        if (this.chatGptNeedToRefreshToken) {
+            this.chromeExtensionService.refreshGptToken();
+        }
+        this.chatGptNeedToRefreshToken = false;
+        this.chatGptCurrentMessage = msg;
+        this.chromeExtensionService.sendMessageToChatGpt(msg);
+    }
+    ListenToChatGpt() {
+        this.chromeExtensionService.ListenFor('chatGptPort').subscribe((res) => {
+            if (res.answer && res.answer.done) {
+                this.chatGptCurrentMessage = '';
+                return;
+            }
+            if (res.answer) {
+                if (res.answer === 'Unauthorized') {
+                    this.chatGptNeedToRefreshToken = true;
+                    this.chatGptCurrentMessage = '';
+                    console.log('ListenToChatGpt Unauthorized msg', res)
+                } else {
+                    console.log('ListenToChatGpt msg', res)
+                }
+                if (res.answer !== this.chatGptCurrentMessage) {
+                    this.chat[this.chat.length - 1].text = res.answer
+                    this.sentQuestion = false
+                    this.chatGptCurrentMessage = '';
+                    this.scrollToBottom();
+                }
+                this.forceBindChanges();
+            }
+        })
+    }
+
     ngOnDestroy(): void {
         this.privacyModelListener.unsubscribe();
     }
-
-
-
 }

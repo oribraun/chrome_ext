@@ -1,24 +1,26 @@
 <div *ngIf="page === 'privacy-model'">
     <div class="model container">
-        <div class="headline-no-prompt">
-            <h2 class="text-center">Endpoint</h2>
-            <!--        <button (click)="testPrivacyModelApi()">test</button>-->
-        </div>
-        <div class="input-group mb-1">
-        <span class="input-group-text">
-            <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>
-            <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>
-            <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>
-        </span>
-            <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">
-            <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>
-        </div>
+        <!--        <div class="headline-no-prompt">-->
+        <!--            <h2 class="text-center">Endpoint</h2>-->
+        <!--            &lt;!&ndash;        <button (click)="testPrivacyModelApi()">test</button>&ndash;&gt;-->
+        <!--        </div>-->
+        <!--        <div class="input-group mb-1">-->
+        <!--        <span class="input-group-text">-->
+        <!--            <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>-->
+        <!--            <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>-->
+        <!--            <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>-->
+        <!--        </span>-->
+        <!--            <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">-->
+        <!--            <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>-->
+        <!--        </div>-->
         <div class="headline-no-prompt" *ngIf="!modelResults">
-<!--            <h2 class="text-center">Start Using {{host}}</h2>-->
-            <h2 class="text-center">Privacy Model</h2>
+            <!--            <h2 class="text-center">Start Using {{host}}</h2>-->
+            <div class="info">
+                <div class="text">Start using chatGpt</div>
+            </div>
         </div>
         <div class="headline-with-prompt" *ngIf="modelResults">
-            <h2 class="text-center">Privacy Model Results</h2>
+            <!--            <h2 class="text-center">Privacy Model Results</h2>-->
             <div class="text-center box">
                 <div class="bold header">
                     <span class="text">Suggested Prompt</span> <i id="suggested_prompt_clipboard" class="bi bi-clipboard" (click)="copyPrompt()"></i>
@@ -62,8 +64,11 @@
 </div>
 <div *ngIf="page === 'prompt-uploader'">
     <div class="prompt-uploader container">
-        <div class="headline-no-prompt">
-            <h2 class="text-center">Upload txt file to inject</h2>
+        <!--        <div class="headline-no-prompt">-->
+        <!--            <h2 class="text-center">Upload txt file to inject</h2>-->
+        <!--        </div>-->
+        <div class="info">
+            <div class="text">Upload txt file to inject to chatGpt</div>
         </div>
         <div class="mb-3">
             <input class="form-control" id="formFileSm" type="file" (change)="fileChanged($event)">
@@ -82,14 +87,27 @@
     </div>
 </div>
 <div class="chat" *ngIf="page === 'chat'">
-    <h2 class="text-center">Chat</h2>
-    <div class="box" *ngFor="let item of chat; let i = index" [ngClass]="{'box-colored': i % 2}">
-        <span>
-            <i *ngIf="!(i % 2)" class="bi bi-person"></i>
-            <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
-        </span> {{item.text}}
-        <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
-            <span class="sr-only"></span>
+<!--    <h2 class="text-center">Chat</h2>-->
+    <div class="input-group mb-1">
+        <input type="text" class="form-control" placeholder="Prompt" (keyup.enter)="chatProcessPrompt(this.chatPrompt)" [(ngModel)]="chatPrompt">
+        <button class="btn btn-outline-secondary" type="button" (click)="chatProcessPrompt(this.chatPrompt)">Send</button>
+    </div>
+    <div class="results">
+        <div class="outer-scroll">
+            <div class="inner-scroll"  #chat_results_scroll>
+                <div class="box" *ngFor="let item of chat; let i = index" [ngClass]="{'box-colored': i % 2}">
+                    <span>
+                        <i *ngIf="!(i % 2)" class="bi bi-person"></i>
+                        <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
+                    </span> {{item.text}}
+                    <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
+                        <span class="sr-only"></span>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+    <div class="need-refresh-token text-center" *ngIf="chatGptNeedToRefreshToken">
+        <a href="https://chat.openai.com/chat" target="_blank">Please login in ChatGpt</a>
     </div>
 </div>

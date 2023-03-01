@@ -12,16 +12,22 @@ export class ChromeExtensionService {
     public replay = new ReplaySubject<any>();
     public events: EventsHashTable<Subject<any>> = {};
     private requestTypeLoginRequiredMap: any = {
-        'privacy-model': true
+        'privacy-model': true,
+        'chat': true
     }
     private _listenToMessages: Subject<any> = new Subject<any>();
     private listenersMap: any = {};
     private chromeRuntimeListener: any;
+    private lastChatGptId: string;
+    private chatGptPort: any
+    private chatGptListener: any
+    private chatGptParentId: string;
     constructor(
         private config: Config,
         // private router: MyRouter
     ) {
         this.setUpChromeRuntimeListener()
+        this.setUpChatGptPortListener()
     }
 
     setUpChromeRuntimeListener() {
@@ -62,6 +68,78 @@ export class ChromeExtensionService {
             } else {
                 sendResponse({success: false, message: 'no request type', request: request})
             }
+        }
+    }
+
+    uuidv4() {
+        // @ts-ignore
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+            (
+                c ^
+                (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+            ).toString(16)
+        );
+    };
+
+    createMessage(message: string) {
+        if (!this.chatGptParentId) {
+            this.chatGptParentId = this.uuidv4();
+        }
+        return {
+            action: "next",
+            // conversation_id: this.chatGptParentId,
+            messages: [{
+                id: this.uuidv4(),
+                role: "user",
+                content: {
+                    content_type: "text",
+                    parts: [message]
+                }
+            }],
+            model: "text-davinci-002-render",
+            parent_message_id: this.uuidv4()
+        }
+    }
+
+    setUpChatGptPortListener() {
+        if (chrome.runtime) {
+            this.chatGptListener = (request: any) => {
+                if (this.events[request.type] && request.type.indexOf('Port') > -1) {
+                    this.Broadcast(request.type, request)
+                }
+                // if (msg.data.done) {
+                //     return;
+                // }
+                // if (msg.data) {
+                //     if (msg.data === 'Unauthorized') {
+                //         console.log('trySendingMessageToPort Unauthorized msg', msg)
+                //     } else {
+                //         console.log('trySendingMessageToPort msg', msg)
+                //     }
+                // }
+                // if (msg.question === "Who's there?")
+                //   port.postMessage({answer: "Madame"});
+                // else if (msg.question === "Madame who?")
+                //   port.postMessage({answer: "Madame... Bovary"});
+            }
+            this.chatGptPort = chrome.runtime.connect({name: "chatGptPort"});
+            this.chatGptPort.onMessage.addListener(this.chatGptListener);
+        }
+    }
+
+    removeChatGptListener() {
+        this.chatGptPort.onMessage.removeListener(this.chatGptListener);
+    }
+
+    sendMessageToChatGpt(message: string) {
+        if (this.chatGptPort) {
+            this.chatGptPort.postMessage({type: 'chatGptPort', payload: this.createMessage(message)});
+        }
+    }
+
+    refreshGptToken() {
+        if (this.chatGptPort) {
+            this.chatGptPort.postMessage({type: 'chatGptPortRefreshToken'});
         }
     }
 

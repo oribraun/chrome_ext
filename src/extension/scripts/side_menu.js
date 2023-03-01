@@ -73,20 +73,24 @@ function getPointerPos(e, preventTouch) {
 
 function addEvents() {
     var startPos
+    var origStartPos
     var startDrag = false;
     var moveStarted = false;
     var newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
     newLeftArrow.addEventListener('mousedown', (e) => {
         startDrag = true;
         startPos = this.getPointerPos(e, false);
+        origStartPos = startPos;
         var el = document.getElementById('domain-tabs-sidebar-iframe')
         el.classList.add('disable-pointer-events')
     })
     window.addEventListener('mousemove', (e) => {
         if (startDrag) {
-            moveStarted = true;
             e.preventDefault();
             const pos = getPointerPos(e, false);
+            if (!moveStarted && Math.abs(origStartPos.y - pos.y) > 3) {
+                moveStarted = true;
+            }
             const moveY = pos.y - startPos.y;
             const moveYPercent = moveY / window.innerHeight * 100;
             const elementTopPercent = newLeftArrow.offsetTop / window.innerHeight * 100;
@@ -169,7 +173,7 @@ if (sidebar) {
     }
     removeSidebar();
 } else {
-    createSidebar ();
+    createSidebar();
     chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
     window.addEventListener('click', windowOnClick, true);
     window.extentionLastEventListeners['window-click'] = windowOnClick;

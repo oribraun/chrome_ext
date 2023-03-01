@@ -1,63 +1,143 @@
 <div class="header container">
-    <nav class="navbar">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-box-arrow-right pointer" title="Logout" (click)="logout($event)"></i>
-            </a>
-            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Hello {{user.username}} - <small>{{user.role_display}} Version</small></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-                        <li class="nav-item" *ngIf="user.company_name">
-                            <a class="nav-link active" aria-current="page" href="#"
-                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                               (click)="changePage('privacy-model')">
-                                Privacy Model
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#"
-                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                               (click)="changePage('prompt-uploader')">
-                                Prompt Uploader
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#"
-                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                               (click)="changePage('chat')">
-                                Chat
-                            </a>
-                        </li>
-<!--                        <li class="nav-item dropdown">-->
-<!--                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">-->
-<!--                                Dropdown-->
-<!--                            </a>-->
-<!--                            <ul class="dropdown-menu">-->
-<!--                                <li><a class="dropdown-item" href="#">Action</a></li>-->
-<!--                                <li><a class="dropdown-item" href="#">Another action</a></li>-->
-<!--                                <li>-->
-<!--                                    <hr class="dropdown-divider">-->
-<!--                                </li>-->
-<!--                                <li><a class="dropdown-item" href="#">Something else here</a></li>-->
-<!--                            </ul>-->
-<!--                        </li>-->
-                    </ul>
-<!--                    <form class="d-flex mt-3" role="search">-->
-<!--                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">-->
-<!--                        <button class="btn btn-outline-success" type="submit">Search</button>-->
-<!--                    </form>-->
-                </div>
-            </div>
-        </div>
-    </nav>
+    <!--    <nav class="navbar">-->
+    <!--        <div class="container-fluid">-->
+    <!--            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">-->
+    <!--                <span class="navbar-toggler-icon"></span>-->
+    <!--            </button>-->
+    <!--            <a class="navbar-brand" href="#">-->
+    <!--                <i class="bi bi-box-arrow-right pointer" title="Logout" (click)="logout($event)"></i>-->
+    <!--            </a>-->
+    <!--            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">-->
+    <!--                <div class="offcanvas-header">-->
+    <!--                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Hello {{user.username}} - <small>{{user.role_display}} Version</small></h5>-->
+    <!--                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>-->
+    <!--                </div>-->
+    <!--                <div class="offcanvas-body">-->
+    <!--                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">-->
+    <!--                        <li class="nav-item" *ngIf="user.company_name">-->
+    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
+    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
+    <!--                               (click)="changePage($event, 'privacy-model')">-->
+    <!--                                Privacy Model-->
+    <!--                            </a>-->
+    <!--                        </li>-->
+    <!--                        <li class="nav-item">-->
+    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
+    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
+    <!--                               (click)="changePage($event, 'prompt-uploader')">-->
+    <!--                                Prompt Uploader-->
+    <!--                            </a>-->
+    <!--                        </li>-->
+    <!--                        <li class="nav-item">-->
+    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
+    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
+    <!--                               (click)="changePage($event, 'chat')">-->
+    <!--                                Chat-->
+    <!--                            </a>-->
+    <!--                        </li>-->
+    <!--                        &lt;!&ndash;                        <li class="nav-item dropdown">&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                Dropdown&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                            </a>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                            <ul class="dropdown-menu">&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Action</a></li>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Another action</a></li>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                <li>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                    <hr class="dropdown-divider">&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                </li>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Something else here</a></li>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                            </ul>&ndash;&gt;-->
+    <!--                        &lt;!&ndash;                        </li>&ndash;&gt;-->
+    <!--                    </ul>-->
+    <!--                    &lt;!&ndash;                    <form class="d-flex mt-3" role="search">&ndash;&gt;-->
+    <!--                    &lt;!&ndash;                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">&ndash;&gt;-->
+    <!--                    &lt;!&ndash;                        <button class="btn btn-outline-success" type="submit">Search</button>&ndash;&gt;-->
+    <!--                    &lt;!&ndash;                    </form>&ndash;&gt;-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--        </div>-->
+    <!--    </nav>-->
+    <div class="menu absolute-menu">
+        <ul class="menu-list menu-list-top">
+            <li class="menu-item menu-item-pull-right">
+                <a class="menu-link" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    <i class="bi bi-gear pointer" title="Settings"></i>
+                </a>
+                <!--                <a class="menu-link" href="#">-->
+                <!--                    <i class="bi bi-gear pointer" title="Settings" (click)="settings($event)"></i>-->
+                <!--                </a>-->
+            </li>
+            <li class="menu-item menu-item-pull-right">
+                <a class="menu-link" href="#">
+                    <i class="bi bi-box-arrow-right pointer" title="Logout" (click)="logout($event)"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
     <div class="logo">
         <img src="/assets/images/Gaia_blue_short_transparent.png" alt="">
+    </div>
+    <div class="menu">
+        <ul class="menu-list menu-list-bottom">
+            <li class="menu-item" *ngIf="user.company_name">
+                <a class="menu-link" href="#"
+                   [ngClass]="{'active': currentPage === 'privacy-model'}"
+                   (click)="changePage($event, 'privacy-model')">
+                    Privacy Model
+                </a>
+            </li>
+            <li class="menu-separator">|</li>
+            <li class="menu-item" *ngIf="user.company_name">
+                <a class="menu-link" href="#"
+                   [ngClass]="{'active': currentPage === 'prompt-uploader'}"
+                   (click)="changePage($event, 'prompt-uploader')">
+                    Prompt Uploader
+                </a>
+            </li>
+            <li class="menu-separator">|</li>
+            <li class="menu-item" *ngIf="user.company_name">
+                <a class="menu-link" href="#"
+                   [ngClass]="{'active': currentPage === 'chat'}"
+                   (click)="changePage($event, 'chat')">
+                    Chat
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Setting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-center">Hello {{user.username}}</h4>
+                <div class="prompts">
+                    <div class="text-center position-relative">
+                        your right click custom prompts
+                        <div class="add" (click)="addPrompt()">
+                            <i class="bi bi-plus"></i>
+                        </div>
+                    </div>
+                    <div class="list">
+                        <div class="input-wrapper" *ngFor="let item of promptSettings; let i = index">
+                            <div class="input-group m-2">
+                                <input type="text" class="form-control" [(ngModel)]="item.title">
+                            </div>
+                            <div class="remove" (click)="removePrompt(i)">
+                                <i class="bi bi-trash"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer text-center">
+<!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>-->
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="savePrompt()">Save</button>
+            </div>
+        </div>
     </div>
 </div>

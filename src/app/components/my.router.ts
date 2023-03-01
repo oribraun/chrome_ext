@@ -10,6 +10,7 @@ export class MyRouter {
     }
     navigate(commands: any[], extras?: NavigationExtras): Promise<boolean> {
         if (environment.production) {
+            // for chrome extension in iframe to prevent adding history pages in domains
             extras = {skipLocationChange: true, ...extras}
             console.log('extras', extras)
         }

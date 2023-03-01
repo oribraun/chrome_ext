@@ -1,12 +1,18 @@
 async function onInitAngular(debug=false) {
-    const form_list = document.getElementsByTagName('form');
+    let form_list;
+    let form;
+    let button;
+    let textarea;
+    let textarea_clone;
+    let textarea_parent;
+    let buttons_list;
+    let button_click_do_original = false;
+    let textarea_clone_list;
+
+    form_list = document.getElementsByTagName('form');
     if (form_list && form_list.length) {
-        const form = form_list[0];
-        let button;
-        let textarea;
-        let textarea_clone;
-        let textarea_parent;
-        const textarea_list = form.getElementsByTagName('textarea');
+        form = form_list[0];
+        textarea_list = form.getElementsByTagName('textarea');
         if (textarea_list && textarea_list.length) {
             textarea = textarea_list[0];
             if(!textarea) {
@@ -19,7 +25,7 @@ async function onInitAngular(debug=false) {
         if (!textarea_parent) {
             return;
         }
-        const buttons_list = textarea_parent.getElementsByTagName('button');
+        buttons_list = textarea_parent.getElementsByTagName('button');
         if (buttons_list && buttons_list.length) {
             button = buttons_list[0]
             button.classList.add('button_clone');
@@ -27,7 +33,7 @@ async function onInitAngular(debug=false) {
                 return;
             }
         }
-        let button_click_do_original = false;
+        button_click_do_original = false;
 
         if (!textarea) {
             return;
@@ -99,79 +105,138 @@ async function onInitAngular(debug=false) {
             //     button.click();
             // }
         }
+        // function windowOnClick(e) {
+        //     console.log('window clicked injected script')
+        //     var myOldUrl = window.location.href;
+        //     console.log('myOldUrl', myOldUrl)
+        //     setTimeout(() => {
+        //         var newUrl = window.location.href;
+        //         console.log('newUrl', newUrl)
+        //         if (myOldUrl !== newUrl) {
+        //             checkLoading().then(() => {
+        //                 setTimeout(() => {
+        //                     onRemoveInitAngular(true)
+        //                     onInitAngular(true)
+        //                 }, 500)
+        //             })
+        //         }
+        //     }, 1500)
+        // }
 
+        function onDivChange(e) {
+            // console.log('onDivChange e', e)
+            textarea_clone_list = document.getElementsByClassName('textarea_clone');
+            if (textarea_clone_list && textarea_clone_list.length) {
+                console.log('no need to inject')
+            } else {
+                console.log('need to inject')
+                onRemoveInitAngular(true)
+                onInitAngular(true)
+
+            }
+        }
         function forceContinue() {
             button_click_do_original = true;
             button.click();
         }
 
+        sendHostNameToContentScript();
+        textarea.style.display = 'none'
+        textarea_clone.addEventListener('keydown', onKeyDownHandler);
+        textarea_parent.append(textarea_clone);
 
-        var textarea_clone_list = document.getElementsByClassName('textarea_clone');
-        if (textarea_clone_list && textarea_clone_list.length) {
-            textarea_clone_injected = textarea_clone_list[0];
-            textarea_clone_injected_parent = textarea_clone_injected.parentElement;
-            console.log('removing injected script')
-            var lastTextAreaKeydown = window.extentionLastEventListeners['textarea-keydown'];
-            var lastButtonClick = window.extentionLastEventListeners['button-click'];
-            var lastChromeMessageTwo = window.extentionLastEventListeners['chrome-message-two'];
-            if (lastTextAreaKeydown) {
-                textarea_clone.removeEventListener('keydown', lastTextAreaKeydown);
-            }
-            if (lastButtonClick) {
-                button.removeEventListener('click', lastButtonClick);
-            }
-            button.classList.remove('button_clone');
-            textarea.style.display = ''
-            textarea_clone_injected_parent.removeChild(textarea_clone_injected);
-            if (lastChromeMessageTwo) {
-                chrome.runtime.onMessage.removeListener(lastChromeMessageTwo);
-            }
-        } else {
-            sendHostNameToContentScript();
-            textarea.style.display = 'none'
-            textarea_clone.addEventListener('keydown', onKeyDownHandler);
-            textarea_parent.append(textarea_clone);
+        button.addEventListener('click', onClickHandler);
 
-            button.addEventListener('click', onClickHandler);
+        // window.addEventListener('click', windowOnClick, true);
 
-            chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
+        var target = document.querySelector('#__next');
+        target.addEventListener("DOMNodeInserted", onDivChange, false);
 
-            window.extentionLastEventListeners['textarea-keydown'] = onKeyDownHandler;
-            window.extentionLastEventListeners['button-click'] = onClickHandler;
-            window.extentionLastEventListeners['chrome-message-two'] = listenForMessagesFromExtension;
+        chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
 
-            // will be used with when
-            // force button clicked
-            // user removed extension by clicking icon
-            // privacy model pass_privacy is true
+        var lastTextAreaKeydown = window.extentionLastEventListeners['textarea-keydown'];
+        var lastButtonClick = window.extentionLastEventListeners['button-click'];
+        var lastChromeMessageTwo = window.extentionLastEventListeners['chrome-message-two'];
+        var lastOnDivChange = window.extentionLastEventListeners['on-div-change'];
+        // var lastWindowClick = window.extentionLastEventListeners['window-click'];
+        if (lastTextAreaKeydown) {
+            textarea_clone.removeEventListener('keydown', lastTextAreaKeydown);
+        }
+        if (lastButtonClick) {
+            button.removeEventListener('click', lastButtonClick);
+        }
+        if (lastChromeMessageTwo) {
+            chrome.runtime.onMessage.removeListener(lastChromeMessageTwo);
+        }
+        if (lastOnDivChange) {
+            target.removeEventListener("DOMNodeInserted", lastOnDivChange, false);
+        }
+        // if (lastWindowClick) {
+        //     window.removeEventListener('click', lastWindowClick, true);
+        // }
 
-            if (debug) {
-                console.log('form', form)
-                console.log('button', button)
-                console.log('textarea', [textarea_clone])
-            }
+        window.extentionLastEventListeners['textarea-keydown'] = onKeyDownHandler;
+        window.extentionLastEventListeners['button-click'] = onClickHandler;
+        window.extentionLastEventListeners['chrome-message-two'] = listenForMessagesFromExtension;
+        window.extentionLastEventListeners['on-div-change'] = onDivChange;
+        // window.extentionLastEventListeners['window-click'] = windowOnClick;
+
+        // will be used with when
+        // force button clicked
+        // user removed extension by clicking icon
+        // privacy model pass_privacy is true
+
+        if (debug) {
+            console.log('form', form)
+            console.log('button', button)
+            console.log('textarea', [textarea_clone])
         }
     }
 }
 
 async function onRemoveInitAngular(debug=false) {
-    var textarea
-    var button
-    var textarea_list = document.getElementsByClassName('textarea_clone');
-    var button_list = form.getElementsByTagName('button');
-    if (textarea_clone && textarea_clone.length) {
-        textarea = textarea_list[0]
-    }
-    if (button_list && button_list.length) {
-        button = button_list[0]
-    }
-    if (textarea) {
-        textarea_parent = textarea.parentElement;
-        textarea_parent.removeChild(textarea)
-    }
+    textarea_clone_list = document.getElementsByClassName('textarea_clone');
+    if (textarea_clone_list && textarea_clone_list.length) {
+        textarea_clone_injected = textarea_clone_list[0];
+        textarea_clone_injected_parent = textarea_clone_injected.parentElement;
+        buttons_list = textarea_clone_injected_parent.getElementsByTagName('button');
+        if (buttons_list && buttons_list.length) {
+            button = buttons_list[0]
+            if(!button) {
+                return;
+            }
+        }
+        console.log('removing injected script')
+        var lastTextAreaKeydown = window.extentionLastEventListeners['textarea-keydown'];
+        var lastButtonClick = window.extentionLastEventListeners['button-click'];
+        var lastChromeMessageTwo = window.extentionLastEventListeners['chrome-message-two'];
+        var lastOnDivChange = window.extentionLastEventListeners['on-div-change'];
+        // var lastWindowClick = window.extentionLastEventListeners['window-click'];
+        if (lastTextAreaKeydown) {
+            textarea_clone.removeEventListener('keydown', lastTextAreaKeydown);
+        }
+        if (lastButtonClick) {
+            button.removeEventListener('click', lastButtonClick);
+        }
+        if (lastChromeMessageTwo) {
+            chrome.runtime.onMessage.removeListener(lastChromeMessageTwo);
+        }
+        if (lastOnDivChange) {
+            target.removeEventListener("DOMNodeInserted", lastOnDivChange, false);
+        }
+        button.classList.remove('button_clone');
+        textarea_clone_injected_parent.removeChild(textarea_clone_injected);
 
-    textarea.style.display = 'none'
-    textarea_clone.parentNode.removeChild(textarea_clone);
+        form_list = document.getElementsByTagName('form');
+        if (form_list && form_list.length) {
+            form = form_list[0];
+            textarea_list = form.getElementsByTagName('textarea');
+            if (textarea_list && textarea_list.length) {
+                textarea = textarea_list[0];
+                textarea.style.display = ''
+            }
+        }
+    }
 }
 
 function sendHostNameToContentScript() {
@@ -205,21 +270,84 @@ function testFetchingLocalApiKey() {
 if (typeof window.extentionLastEventListeners !== 'object') {
     window.extentionLastEventListeners = {}
 }
+
+var interval;
+function getTokenFromChatGpt() {
+    if (window.location.host === 'chat.openai.com') {
+        interval = setInterval((() => {
+            tryToGetToken();
+        }), 1000)
+        tryToGetToken();
+    }
+}
+
+function tryToGetToken() {
+    // console.log('getTokenFromChatGpt interval')
+    var e = document.querySelector('script[id="__NEXT_DATA__"]');
+    if (e && e.textContent) {
+        var textContent = e.textContent;
+        try {
+            var json = JSON.parse(textContent)
+            if (json && json.props && json.props.pageProps && json.props.pageProps.accessToken) {
+                if (chrome.runtime) {
+                    chrome.runtime.sendMessage({
+                        type: "GAIA_GET_TOKEN",
+                        token: json.props.pageProps.accessToken
+                    })
+                }
+                clearInterval(interval);
+            }
+        } catch (e) {
+
+        }
+    }
+}
+
 var inject = false;
 if (window.location.href.indexOf('https://chat.openai.com/chat') > -1) {
     inject = true;
 }
 if (document.readyState === "complete") {
-    if (inject) {
-        onInitAngular(true);
-    }
+    // checkLoading().then(() => {
+    init();
+    // })
 } else {
     var loadfunction = window.onload;
     window.onload = function (event) {
         //enter here the action you want to do once loaded
+        // checkLoading().then(() => {
+        init();
+        // })
+        if (loadfunction) loadfunction(event);
+    }
+}
+
+function checkLoading() {
+    return new Promise((resolve, reject) => {
+        let interval = setInterval(() => {
+            let main = document.getElementsByTagName('main');
+            console.log('main', main)
+            if (main && main.length) {
+                let loader = main[0].getElementsByClassName('animate-spin');
+                console.log('loader', loader)
+                if (!loader.length) {
+                    clearInterval(interval)
+                    setTimeout(() => {
+                        resolve()
+                    }, 1000)
+                }
+            }
+        }, 300)
+    })
+}
+function init() {
+    textarea_clone_list = document.getElementsByClassName('textarea_clone');
+    if (textarea_clone_list && textarea_clone_list.length) {
+        onRemoveInitAngular(true)
+    } else {
         if (inject) {
             onInitAngular(true);
+            getTokenFromChatGpt();
         }
-        if (loadfunction) loadfunction(event);
     }
 }

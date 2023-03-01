@@ -32,6 +32,12 @@ export class CustomInterceptor implements HttpInterceptor {
                         // console.log('This is server side error');
                         errorMsg = `Error Code: ${error.status},  Message: ${error.message}`;
                     }
+                    if (error.status === 403) {
+                        if (error && error.error && error.error.detail === "Invalid token.") {
+                            console.log('Forbidden');
+                            this.clearAndRedirectToLogin();
+                        }
+                    }
                     if (error.status === 401) {
                         console.log('Unauthorized');
                         this.clearAndRedirectToLogin();
