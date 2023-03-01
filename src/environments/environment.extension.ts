@@ -7,9 +7,11 @@ export const environment = {
     appName: pkg.name,
     appStoragePrefix: pkg.name.replace(/ /g, '_'),
     production: true,
+    staging: false,
     development: false,
+    extension: true,
     gaia_company_token: '',
-    serverUrl: 'http://13.230.184.34/',
+    serverUrl: 'https://home.gaialabs.ai/',
     google_client_id: '687079247846-8e8lhl2k88pfm6nbd36e5higdndq0vck.apps.googleusercontent.com',
     firebaseConfig: {
         apiKey: "AIzaSyBAvzWjJfPxGWpHXVPrQzPNJp7LcLaavgg",

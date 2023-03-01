@@ -1,4 +1,8 @@
-
+// try {
+//   importScripts('extension/background/local_chat_gpt.js'/* , '/path2/file2.js' , and so on */);
+// } catch (e) {
+//   console.error(e);
+// }
 chrome.runtime.onMessage.addListener((msg) => {
     console.log('msg', msg)
     switch (msg.type) {

@@ -16,6 +16,7 @@
     "build": "ng build --configuration=production",
     "build-stg": "ng build --configuration=staging",
     "build-prd": "ng build --configuration=production",
+    "build-ext": "ng build --configuration=extension",
     "test": "ng test",
     "serve": "ng serve --port 4201",
     "lint": "ng lint",
