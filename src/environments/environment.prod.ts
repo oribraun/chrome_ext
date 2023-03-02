@@ -11,7 +11,7 @@ export const environment = {
     development: false,
     extension: true,
     gaia_company_token: '',
-    serverUrl: 'http://13.230.184.34/',
+    serverUrl: 'http://52.45.2.143/',
     google_client_id: '687079247846-8e8lhl2k88pfm6nbd36e5higdndq0vck.apps.googleusercontent.com',
     firebaseConfig: {
         apiKey: "AIzaSyBAvzWjJfPxGWpHXVPrQzPNJp7LcLaavgg",
