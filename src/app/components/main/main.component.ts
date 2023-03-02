@@ -152,7 +152,6 @@ export class MainComponent implements OnInit, OnDestroy {
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
             const text = request.text;
-            console.log('request.noGptToken', request.noGptToken);
             if (request.noGptToken) {
                 this.chatGptNeedToRefreshToken = true;
                 this.chatRequestInProgress = false;
@@ -160,6 +159,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.forceBindChanges();
                 return;
             }
+            this.chatGptNeedToRefreshToken = false;
             if (!this.config.is_company) {
                 sendResponse({success: false, message: 'Unauthorized'});
                 return;
@@ -415,7 +415,12 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chromeExtensionService.sendMessageToChatGpt(msg);
     }
     ListenToChatGpt() {
-        this.chromeExtensionService.ListenFor('chatGptPort').subscribe((res) => {
+        this.chromeExtensionService.ListenFor('chatGptGotToken').subscribe((res) => {
+            console.log('chatGptGotToken angular')
+            this.chatGptNeedToRefreshToken = false;
+            this.forceBindChanges();
+        })
+        this.chromeExtensionService.ListenFor('chatGptRequest').subscribe((res) => {
             if (res.answer && res.answer.done) {
                 this.chatGptCurrentMessage = '';
                 return;

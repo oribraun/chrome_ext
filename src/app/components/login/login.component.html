@@ -29,17 +29,19 @@
                 <label for="password">Password</label>
                 <input type="password" name="password" class="form-control" id="password" [(ngModel)]="password" required>
                 <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
+                <div class="text-center text-success" *ngIf="registerSuccess" [innerHTML]="registerSuccess"></div>
                 <br>
                 <div class="text-center">
                     <button class="btn btn-primary" (click)="register()">Register</button>
                 </div>
                 <br>
-                <p>Already have an account? <a (click)="formType='login'; loginErr = '';">Login</a></p>
+                <p>Already have an account? <a (click)="formType='login'; loginErr = '';registerSuccess = '';">Login</a></p>
             </div>
             <div *ngSwitchCase="'forgot'">
                 <h3 class="text-center">Forgot Password</h3>
                 <label for="email">Email</label>
                 <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
+                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
                 <br>
                 <div class="text-center">
                     <button class="btn btn-primary" (click)="forgot()">Submit</button>

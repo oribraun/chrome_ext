@@ -87,7 +87,7 @@ export class ChromeExtensionService {
         }
         return {
             action: "next",
-            // conversation_id: this.chatGptParentId,
+            conversation_id: this.chatGptParentId,
             messages: [{
                 id: this.uuidv4(),
                 role: "user",
@@ -104,7 +104,7 @@ export class ChromeExtensionService {
     setUpChatGptPortListener() {
         if (chrome.runtime) {
             this.chatGptListener = (request: any) => {
-                if (this.events[request.type] && request.type.indexOf('Port') > -1) {
+                if (this.events[request.type]) {
                     this.Broadcast(request.type, request)
                 }
                 // if (msg.data.done) {
@@ -133,13 +133,13 @@ export class ChromeExtensionService {
 
     sendMessageToChatGpt(message: string) {
         if (this.chatGptPort) {
-            this.chatGptPort.postMessage({type: 'chatGptPort', payload: this.createMessage(message)});
+            this.chatGptPort.postMessage({type: 'chatGptRequest', payload: this.createMessage(message)});
         }
     }
 
     refreshGptToken() {
         if (this.chatGptPort) {
-            this.chatGptPort.postMessage({type: 'chatGptPortRefreshToken'});
+            this.chatGptPort.postMessage({type: 'chatGptRefreshToken'});
         }
     }
 

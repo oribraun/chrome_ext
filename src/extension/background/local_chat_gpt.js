@@ -1,4 +1,16 @@
 
+
+var tabStore = {};         // <-- Collection of tabs
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    tabStore[tabId] = tab;
+    console.log('onUpdated tabStore', tabStore)
+});
+chrome.tabs.onRemoved.addListener(function(tabId) {
+    delete tabStore[tabId];
+    console.log('onRemoved tabStore', tabStore)
+});
+
+
 const storageKey = "gaia-chatgpt-token"
 
 class ChatGPTClient {
@@ -325,37 +337,51 @@ try {
     //     type: "actionClicked",
     //   });
     // });
-
+    const ports = []
     chrome.runtime.onConnect.addListener((port) => {
+        ports.push(port)
         let isDisconnected = false;
-        // if (port.name === "chatGptPort") {
-        port.onMessage.addListener((msg) => {
-            if (msg.type === 'chatGptPort') {
-                if (msg.payload) {
-                    chatgpt.generateChatGPTReponse(msg.payload, (answer) => {
-                        if (!isDisconnected) port.postMessage({type: msg.type, answer});
+        if (port.name === "chatGptPort") {
+            port.onMessage.addListener((msg) => {
+                console.log('msg', msg)
+                if (msg.type === 'chatGptRequest') {
+                    if (msg.payload) {
+                        chatgpt.generateChatGPTReponse(msg.payload, (answer) => {
+                            if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer});
+                        });
+                    }
+                }
+                if (msg.type === 'chatGptRefreshToken') {
+                    chatgpt.getTokenFromStorage().then(() => {
+                        console.log('chatGptPortRefreshToken getTokenFromStorage success', this.accessToken)
+                    }).catch(() => {
+                        console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
                     });
                 }
-            }
-            if (msg.type === 'chatGptPortRefreshToken') {
-                this.getTokenFromStorage().then(() => {
-                    console.log('chatGptPortRefreshToken getTokenFromStorage success', this.accessToken)
-                }).catch(() => {
-                    console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
-                });
-            }
-        });
+                if (msg.type === 'chatGptGotToken') {
+                    chatgpt.updateAccessToken(msg.token);
+                    // port.postMessage({port: port.name, type: 'chatGptGotToken', token: msg.token});
+                    for (let tab_id in tabStore) {
+                        chrome.tabs.sendMessage(parseInt(tab_id), {type: 'chatGptGotToken', token: msg.token});
+                    }
+                    // chrome.tabs.query({}, function(tabs) {
+                    //     tabs.forEach(function(tab) {
+                    //         chrome.tabs.sendMessage(tab.id, {type: 'chatGptGotToken', token: msg.token});
+                    //     });
+                    // });
+                }
+            });
 
-        port.onDisconnect.addListener(function () {
-            isDisconnected = true;
-        });
-        // }
+            port.onDisconnect.addListener(function () {
+                isDisconnected = true;
+            });
+        }
     });
 
     chrome.runtime.onMessage.addListener((msg) => {
         console.log('msg', msg)
         switch (msg.type) {
-            case "GAIA_GET_TOKEN":
+            case "chatGptGotToken":
                 chatgpt.updateAccessToken(msg.token);
                 break;
             case "SEND_ANALYTICS":

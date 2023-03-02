@@ -21,6 +21,7 @@ export class LoginComponent implements OnInit {
     baseApi = 'http://localhost:8000/api/auth/';
     user: any = {};
     loginErr = '';
+    registerSuccess = '';
 
     constructor(
         private http: HttpClient,
@@ -101,9 +102,11 @@ export class LoginComponent implements OnInit {
             const response: any = await this.apiService.register(this.email, this.username, this.password).toPromise();
             if (!response.err) {
                 const data = response.data;
-                this.setupUser(data);
-                this.chromeExtensionService.hideSidebar();
-                this.router.navigate(['/'])
+                const success_message = data.message;
+                this.registerSuccess = success_message;
+                // this.setupUser(data);
+                // this.chromeExtensionService.hideSidebar();
+                // this.router.navigate(['/'])
             } else {
                 if (Array.isArray(response.errMessage)) {
                     this.loginErr = response.errMessage.join('</br>');
@@ -121,6 +124,8 @@ export class LoginComponent implements OnInit {
             const response: any = await lastValueFrom(this.apiService.forgotPassword(this.email));
             if (!response.err) {
                 console.log('email sent successfully, please check your email')
+            } else {
+                this.loginErr = response.errMessage;
             }
         } catch (error) {
             console.error(error);

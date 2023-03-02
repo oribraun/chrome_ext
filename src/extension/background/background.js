@@ -4,7 +4,9 @@ chrome.runtime.onMessage.addListener((msg) => {
     switch (msg.type) {
         case "UPDATE_CUSTOM_PROMPT":
             // sendAnalytics(msg.details);
-            setUpCustomChromeMenuOption(msg.arr)
+            if (msg.arr && msg.arr.length) {
+                setUpCustomChromeMenuOption(msg.arr)
+            }
             break;
         default:
             break;
@@ -320,7 +322,8 @@ function setUpCustomChromeMenuOption(arr) {
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
     const storageKey = "gaia-chatgpt-token"
     let text = info.selectionText;
-    chrome.storage.sync.get(storageKey, function (obj) {
+    chrome.storage.local.get(storageKey, function (obj) {
+        console.log('storageKey obj', obj)
         if (obj && obj[storageKey]) {
             console.log('info', info)
             if (info.menuItemId === 'gaiaSummarize') {

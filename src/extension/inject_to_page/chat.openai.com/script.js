@@ -206,22 +206,24 @@ async function onRemoveInitAngular(debug=false) {
                 return;
             }
         }
+        var target = document.querySelector('#__next');
+
         console.log('removing injected script')
         var lastTextAreaKeydown = window.extentionLastEventListeners['textarea-keydown'];
         var lastButtonClick = window.extentionLastEventListeners['button-click'];
         var lastChromeMessageTwo = window.extentionLastEventListeners['chrome-message-two'];
         var lastOnDivChange = window.extentionLastEventListeners['on-div-change'];
         // var lastWindowClick = window.extentionLastEventListeners['window-click'];
-        if (lastTextAreaKeydown) {
-            textarea_clone.removeEventListener('keydown', lastTextAreaKeydown);
+        if (lastTextAreaKeydown && textarea_clone_injected) {
+            textarea_clone_injected.removeEventListener('keydown', lastTextAreaKeydown);
         }
-        if (lastButtonClick) {
+        if (lastButtonClick && button) {
             button.removeEventListener('click', lastButtonClick);
         }
         if (lastChromeMessageTwo) {
             chrome.runtime.onMessage.removeListener(lastChromeMessageTwo);
         }
-        if (lastOnDivChange) {
+        if (lastOnDivChange && target) {
             target.removeEventListener("DOMNodeInserted", lastOnDivChange, false);
         }
         button.classList.remove('button_clone');
@@ -290,10 +292,12 @@ function tryToGetToken() {
             var json = JSON.parse(textContent)
             if (json && json.props && json.props.pageProps && json.props.pageProps.accessToken) {
                 if (chrome.runtime) {
-                    chrome.runtime.sendMessage({
-                        type: "GAIA_GET_TOKEN",
-                        token: json.props.pageProps.accessToken
-                    })
+                    var chatGptPort = chrome.runtime.connect({name: "chatGptPort"});
+                    chatGptPort.postMessage({type: 'chatGptGotToken', token:  json.props.pageProps.accessToken});
+                    // chrome.runtime.sendMessage({
+                    //     type: "chatGptGotToken",
+                    //     token: json.props.pageProps.accessToken
+                    // })
                 }
                 clearInterval(interval);
             }
