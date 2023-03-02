@@ -12,7 +12,7 @@
   ],
   "options_page": "index.html?#/options",
   "background": {
-    "service_worker": "extension/background/background.js"
+    "service_worker": "extension/background/main.js"
   },
   "web_accessible_resources": [
     {

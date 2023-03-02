@@ -152,8 +152,16 @@ export class MainComponent implements OnInit, OnDestroy {
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
             const text = request.text;
+            console.log('request.noGptToken', request.noGptToken);
+            if (request.noGptToken) {
+                this.chatGptNeedToRefreshToken = true;
+                this.chatRequestInProgress = false;
+                this.chromeExtensionService.showSidebar('ListenFor chat');
+                this.forceBindChanges();
+                return;
+            }
             if (!this.config.is_company) {
-                sendResponse({success: false, message: 'unauthorized'});
+                sendResponse({success: false, message: 'Unauthorized'});
                 return;
             }
             // this.resetModelResults();
@@ -193,8 +201,9 @@ export class MainComponent implements OnInit, OnDestroy {
         this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
-        // this.sendMessageToChatGpt(text);
-        // return;
+        this.sendMessageToChatGpt(text);
+        return;
+
         const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
         const answers: any = [];
         this.chatPrompt = '';

@@ -1,8 +1,4 @@
-// try {
-//   importScripts('extension/background/local_chat_gpt.js'/* , '/path2/file2.js' , and so on */);
-// } catch (e) {
-//   console.error(e);
-// }
+
 chrome.runtime.onMessage.addListener((msg) => {
     console.log('msg', msg)
     switch (msg.type) {
@@ -322,27 +318,34 @@ function setUpCustomChromeMenuOption(arr) {
 }
 
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
+    const storageKey = "gaia-chatgpt-token"
     let text = info.selectionText;
-    console.log('info', info)
-    if (info.menuItemId === 'gaiaSummarize') {
-        text = 'Summarize:\n ' + text;
-    } else if (info.menuItemId === 'gaiaAsk') {
-        text = 'Ask:\n ' + text;
-    } else if (info.menuItemId === 'gaiaExpend') {
-        text = 'Expend:\n ' + text;
-    } else {
-        const orig_text = text;
-        text = '';
-        chrome.storage.sync.get(info.menuItemId, function (obj) {
-            if (obj && obj[info.menuItemId]) {
-                text = obj[info.menuItemId] + ':\n' + orig_text;
+    chrome.storage.sync.get(storageKey, function (obj) {
+        if (obj && obj[storageKey]) {
+            console.log('info', info)
+            if (info.menuItemId === 'gaiaSummarize') {
+                text = 'Summarize:\n ' + text;
+            } else if (info.menuItemId === 'gaiaAsk') {
+                text = 'Ask:\n ' + text;
+            } else if (info.menuItemId === 'gaiaExpend') {
+                text = 'Expend:\n ' + text;
+            } else {
+                const orig_text = text;
+                text = '';
+                chrome.storage.sync.get(info.menuItemId, function (obj) {
+                    if (obj && obj[info.menuItemId]) {
+                        text = obj[info.menuItemId] + ':\n' + orig_text;
+                        chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
+                    }
+                })
+            }
+            if (text) {
                 chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
             }
-        })
-    }
-    if (text) {
-        chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
-    }
+        } else {
+            chrome.tabs.sendMessage(tab.id, {type: 'chat', noGptToken: true, text: text});
+        }
+    })
 })
 
 

@@ -7,7 +7,7 @@ class ChatGPTClient {
     creatingWindow = false;
 
     constructor() {
-        // this.init();
+        this.init();
     }
 
     init = async () => {
