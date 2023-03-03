@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Config} from "../../config";
 import {ApiService} from "../../services/api.service";
@@ -20,8 +20,9 @@ export class LoginComponent implements OnInit {
     username: string = '';
     baseApi = 'http://localhost:8000/api/auth/';
     user: any = {};
-    loginErr = '';
-    registerSuccess = '';
+    errMessage = '';
+    successMessage = '';
+    showVerify = false;
 
     constructor(
         private http: HttpClient,
@@ -30,6 +31,7 @@ export class LoginComponent implements OnInit {
         private chromeExtensionService: ChromeExtensionService,
         private router: MyRouter,
         private route: ActivatedRoute,
+        private ref: ChangeDetectorRef
     ) {
     }
 
@@ -80,53 +82,78 @@ export class LoginComponent implements OnInit {
         // })
     }
     async login() {
+        this.resetMessages();
         try {
-            this.loginErr = '';
             const response: any = await lastValueFrom(this.apiService.login(this.email,this.password));
+            const data = response.data;
             if (!response.err) {
-                const data = response.data;
                 this.setupUser(data);
                 this.chromeExtensionService.hideSidebar();
                 this.router.navigate([''])
             } else {
-                this.loginErr = response.errMessage;
+                this.errMessage = response.errMessage;
+                if (data.verify) {
+                    this.showVerify = true;
+                }
             }
+            this.forceBindChanges();
         } catch (error) {
             console.error(error);
         }
     }
 
     async register() {
+        this.resetMessages();
         try {
-            this.loginErr = '';
             const response: any = await this.apiService.register(this.email, this.username, this.password).toPromise();
             if (!response.err) {
                 const data = response.data;
                 const success_message = data.message;
-                this.registerSuccess = success_message;
+                this.successMessage = success_message;
                 // this.setupUser(data);
                 // this.chromeExtensionService.hideSidebar();
                 // this.router.navigate(['/'])
             } else {
                 if (Array.isArray(response.errMessage)) {
-                    this.loginErr = response.errMessage.join('</br>');
+                    this.errMessage = response.errMessage.join('</br>');
                 } else {
-                    this.loginErr = response.errMessage;
+                    this.errMessage = response.errMessage;
                 }
             }
+            this.forceBindChanges();
         } catch (error) {
             console.error(error);
         }
     }
 
     async forgot() {
+        this.resetMessages();
         try {
             const response: any = await lastValueFrom(this.apiService.forgotPassword(this.email));
             if (!response.err) {
-                console.log('email sent successfully, please check your email')
+                // console.log('email sent successfully, please check your email')
+                this.successMessage = 'email sent successfully, please check your email';
             } else {
-                this.loginErr = response.errMessage;
+                this.errMessage = response.errMessage;
             }
+            this.forceBindChanges();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async resendVerifyEmail(event: Event) {
+        event.preventDefault();
+        this.resetMessages();
+        try {
+            const response: any = await lastValueFrom(this.apiService.resendVerifyEmail(this.email));
+            if (!response.err) {
+                // console.log('email sent successfully, please check your email')
+                this.successMessage = 'email sent successfully, please check your email';
+            } else {
+                this.errMessage = response.errMessage;
+            }
+            this.showVerify = false;
         } catch (error) {
             console.error(error);
         }
@@ -222,6 +249,18 @@ export class LoginComponent implements OnInit {
             });
             // this.config.user = JSON.parse(this.config.getCookie('user'));
         }
+    }
+
+    forceBindChanges() {
+        if (chrome.runtime) {
+            this.ref.detectChanges();
+        }
+    }
+
+    resetMessages() {
+        this.errMessage = '';
+        this.successMessage = '';
+        this.showVerify = false;
     }
 
     // signInWithGoogle(): void {

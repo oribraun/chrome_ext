@@ -10,14 +10,18 @@
                 <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
                 <label for="password">Password</label>
                 <input type="password" name="password" class="form-control" id="password" [(ngModel)]="password" required>
-                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
+                <div class="text-center text-danger" *ngIf="errMessage" [innerHTML]="errMessage"></div>
+                <div class="text-center text-success" *ngIf="successMessage" [innerHTML]="successMessage"></div>
+                <div class="text-center text-success" *ngIf="showVerify">
+                    <a href="#" (click)="resendVerifyEmail($event)">Resend</a>
+                </div>
                 <br>
                 <div class="text-center">
                     <button class="btn btn-primary" (click)="login()">Login</button>
                 </div>
                 <br>
-                <p>Don't have an account? <a (click)="formType='register'; loginErr = '';">Register</a></p>
-                <p><a (click)="formType='forgot'; loginErr = '';">Forgot Password</a></p>
+                <p>Don't have an account? <a (click)="formType='register'; errMessage = '';">Register</a></p>
+                <p><a (click)="formType='forgot'; resetMessages();">Forgot Password</a></p>
 <!--                <app-google-signin></app-google-signin>-->
             </div>
             <div *ngSwitchCase="'register'">
@@ -28,26 +32,27 @@
                 <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
                 <label for="password">Password</label>
                 <input type="password" name="password" class="form-control" id="password" [(ngModel)]="password" required>
-                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
-                <div class="text-center text-success" *ngIf="registerSuccess" [innerHTML]="registerSuccess"></div>
+                <div class="text-center text-danger" *ngIf="errMessage" [innerHTML]="errMessage"></div>
+                <div class="text-center text-success" *ngIf="successMessage" [innerHTML]="successMessage"></div>
                 <br>
                 <div class="text-center">
                     <button class="btn btn-primary" (click)="register()">Register</button>
                 </div>
                 <br>
-                <p>Already have an account? <a (click)="formType='login'; loginErr = '';registerSuccess = '';">Login</a></p>
+                <p>Already have an account? <a (click)="formType='login'; resetMessages();">Login</a></p>
             </div>
             <div *ngSwitchCase="'forgot'">
                 <h3 class="text-center">Forgot Password</h3>
                 <label for="email">Email</label>
                 <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
-                <div class="text-center text-danger" *ngIf="loginErr" [innerHTML]="loginErr"></div>
+                <div class="text-center text-danger" *ngIf="errMessage" [innerHTML]="errMessage"></div>
+                <div class="text-center text-success" *ngIf="successMessage" [innerHTML]="successMessage"></div>
                 <br>
                 <div class="text-center">
                     <button class="btn btn-primary" (click)="forgot()">Submit</button>
                 </div>
                 <br>
-                <p>Remember your password? <a (click)="formType='login'; loginErr = '';">Login</a></p>
+                <p>Remember your password? <a (click)="formType='login'; resetMessages();">Login</a></p>
             </div>
         </form>
     </div>
