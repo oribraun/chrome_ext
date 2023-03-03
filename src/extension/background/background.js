@@ -1,6 +1,6 @@
 
 chrome.runtime.onMessage.addListener((msg) => {
-    console.log('msg', msg)
+    // console.log('msg', msg)
     switch (msg.type) {
         case "UPDATE_CUSTOM_PROMPT":
             // sendAnalytics(msg.details);
@@ -62,7 +62,7 @@ chrome.runtime.onInstalled.addListener(function (object) {
 
     if (object.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.tabs.create({ url: internalUrl }, function (tab) {
-            console.log("New tab launched");
+            // console.log("New tab launched");
         });
     }
     setUpChromeMenuOption();
@@ -323,9 +323,9 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
     const storageKey = "gaia-chatgpt-token"
     let text = info.selectionText;
     chrome.storage.local.get(storageKey, function (obj) {
-        console.log('storageKey obj', obj)
+        // console.log('storageKey obj', obj)
         if (obj && obj[storageKey]) {
-            console.log('info', info)
+            // console.log('info', info)
             if (info.menuItemId === 'gaiaSummarize') {
                 text = 'Summarize:\n ' + text;
             } else if (info.menuItemId === 'gaiaAsk') {

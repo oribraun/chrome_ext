@@ -3,11 +3,11 @@
 var tabStore = {};         // <-- Collection of tabs
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     tabStore[tabId] = tab;
-    console.log('onUpdated tabStore', tabStore)
+    // console.log('onUpdated tabStore', tabStore)
 });
 chrome.tabs.onRemoved.addListener(function(tabId) {
     delete tabStore[tabId];
-    console.log('onRemoved tabStore', tabStore)
+    // console.log('onRemoved tabStore', tabStore)
 });
 
 
@@ -24,13 +24,13 @@ class ChatGPTClient {
 
     init = async () => {
         this.getAccessTokenFromApi().then(() => {
-            console.log('getAccessTokenFromApi success', this.accessToken)
+            // console.log('getAccessTokenFromApi success', this.accessToken)
         }).catch(() => {
-            console.log('getAccessTokenFromApi rejected')
+            // console.log('getAccessTokenFromApi rejected')
             this.getTokenFromStorage().then(() => {
-                console.log('getTokenFromStorage success', this.accessToken)
+                // console.log('getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                console.log('getTokenFromStorage rejected')
+                // console.log('getTokenFromStorage rejected')
                 this.tryToGetFromWindow()
             });
         })
@@ -52,7 +52,7 @@ class ChatGPTClient {
     }
 
     tryToGetFromWindow() {
-        console.log('tryToGetFromWindow')
+        // console.log('tryToGetFromWindow')
         if (this.creatingWindow) {
             return;
         }
@@ -74,13 +74,13 @@ class ChatGPTClient {
     removeWindow(window_id) {
         setTimeout(() => {
             this.getTokenFromStorage().then(() => {
-                console.log('removeWindow getTokenFromStorage success', this.accessToken)
+                // console.log('removeWindow getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                console.log('removeWindow getTokenFromStorage rejected')
+                // console.log('removeWindow getTokenFromStorage rejected')
                 this.getAccessTokenFromApi().then(() => {
-                    console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
+                    // console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
                 }).catch(() => {
-                    console.log('removeWindow getAccessTokenFromApi rejected')
+                    // console.log('removeWindow getAccessTokenFromApi rejected')
                 })
             });
             // console.log('this.accessToken', this.accessToken)
@@ -166,10 +166,10 @@ class ChatGPTClient {
     getAccessTokenFromApi = async () => {
         return new Promise((resolve, reject) => {
             fetch("https://chat.openai.com/api/auth/session").then(async (response) => {
-                console.log('response', response);
+                // console.log('response', response);
                 if (response.status === 200) {
                     let json = await response.json()
-                    console.log('json', json)
+                    // console.log('json', json)
                     if (json.accessToken) {
                         this.updateAccessToken(json.accessToken);
                         resolve(1);
@@ -343,7 +343,7 @@ try {
         let isDisconnected = false;
         if (port.name === "chatGptPort") {
             port.onMessage.addListener((msg) => {
-                console.log('msg', msg)
+                // console.log('msg', msg)
                 if (msg.type === 'chatGptRequest') {
                     if (msg.payload) {
                         chatgpt.generateChatGPTReponse(msg.payload, (answer) => {
@@ -353,9 +353,9 @@ try {
                 }
                 if (msg.type === 'chatGptRefreshToken') {
                     chatgpt.getTokenFromStorage().then(() => {
-                        console.log('chatGptPortRefreshToken getTokenFromStorage success', this.accessToken)
+                        // console.log('chatGptPortRefreshToken getTokenFromStorage success', this.accessToken)
                     }).catch(() => {
-                        console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
+                        // console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
                     });
                 }
                 if (msg.type === 'chatGptGotToken') {
@@ -379,7 +379,7 @@ try {
     });
 
     chrome.runtime.onMessage.addListener((msg) => {
-        console.log('msg', msg)
+        // console.log('msg', msg)
         switch (msg.type) {
             case "chatGptGotToken":
                 chatgpt.updateAccessToken(msg.token);

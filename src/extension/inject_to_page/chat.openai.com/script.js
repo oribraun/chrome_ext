@@ -344,13 +344,14 @@ function checkLoading() {
         }, 300)
     })
 }
+var debug = false;
 function init() {
     textarea_clone_list = document.getElementsByClassName('textarea_clone');
     if (textarea_clone_list && textarea_clone_list.length) {
-        onRemoveInitAngular(true)
+        onRemoveInitAngular(debug)
     } else {
         if (inject) {
-            onInitAngular(true);
+            onInitAngular(debug);
             getTokenFromChatGpt();
         }
     }

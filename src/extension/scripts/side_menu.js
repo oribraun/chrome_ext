@@ -181,7 +181,7 @@ if (sidebar) {
 }
 
 function windowOnClick(e) {
-    console.log('window clicked')
+    // console.log('window clicked')
     var side_bar = e.target.closest(".domain-tabs-sidebar-show");
     if (!side_bar) {
         hideSideBar();
@@ -189,7 +189,7 @@ function windowOnClick(e) {
 }
 
 async function listenForMessagesFromExtension(request, sender, sendResponse) {
-    console.log('side menu got the message', request.type);
+    // console.log('side menu got the message', request.type);
     if (request.type) {
         if (request.type === 'toggle-sidebar') {
             toggleSideBar();
