@@ -86,8 +86,8 @@
                     Privacy Model
                 </a>
             </li>
-            <li class="menu-separator">|</li>
-            <li class="menu-item" *ngIf="user.company_name">
+            <li class="menu-separator" *ngIf="user.company_name">|</li>
+            <li class="menu-item">
                 <a class="menu-link" href="#"
                    [ngClass]="{'active': currentPage === 'prompt-uploader'}"
                    (click)="changePage($event, 'prompt-uploader')">
@@ -95,7 +95,7 @@
                 </a>
             </li>
             <li class="menu-separator">|</li>
-            <li class="menu-item" *ngIf="user.company_name">
+            <li class="menu-item">
                 <a class="menu-link" href="#"
                    [ngClass]="{'active': currentPage === 'chat'}"
                    (click)="changePage($event, 'chat')">
