@@ -8,10 +8,147 @@ html {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-family: 'OpenSans', -apple-system, BlinkMacSystemFont,
-            'Segoe UI', 'Roboto', 'Oxygen',
-            'Ubuntu', 'Cantarell', 'Fira Sans',
-            'Droid Sans', 'Helvetica Neue',
-            sans-serif;
+        'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans',
+        'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+        .gaia-input-group {
+            position: relative;
+            input[type=radio] {
+                position: relative;
+                vertical-align: top;
+                margin: 2px 0;
+            }
+            input:-webkit-autofill,
+            input:-webkit-autofill:hover,
+            input:-webkit-autofill:focus,
+            textarea:-webkit-autofill,
+            textarea:-webkit-autofill:hover,
+            textarea:-webkit-autofill:focus,
+            select:-webkit-autofill,
+            select:-webkit-autofill:hover,
+            select:-webkit-autofill:focus {
+                //border: 1px solid green;
+                //-webkit-text-fill-color: green;
+                -webkit-box-shadow: 0 0 0px 1000px #fff inset;
+                //transition: background-color 5000s ease-in-out 0s;
+                //animation-name: autofill;
+                //animation-fill-mode: both;
+            }
+            //@-webkit-keyframes autofill {
+            //    to {
+            //        font-size: 54px !important;
+            //    }
+            //}
+            //input:-webkit-autofill::first-line {
+            //    font-size: 54px !important;
+            //}
+            input:not([type=radio]), textarea, select {
+                position: relative;
+                display: block;
+                width: 100%;
+                height: calc(1.2em + 0.75rem + 2px);
+                padding: 0.375rem 0.75rem;
+                font-size: 1rem;
+                font-weight: 400;
+                line-height: 1.5;
+                color: #28282c;
+                background: #fff;
+                background-clip: padding-box;
+                border: 1px solid #ececf0;
+                border-radius: 2px;
+                outline: none;
+                //transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+                transition: border-color .15s ease-in-out;
+                margin-bottom: 2px;
+                //&:not([disabled]):focus ~ .labeling-block-row-column-body-item-box-input-label-hover-disappeared,
+                //&:not([disabled]):hover ~ .labeling-block-row-column-body-item-box-input-label-hover-disappeared,
+                //&:not([disabled])[value]:not([value=""]) ~ .labeling-block-row-column-body-item-box-input-label-hover-disappeared {
+                &[value]:not([value=""]) ~ .gaia-input-group-label-hover-disappeared {
+                    font-size: 0.9em;
+                    //top: -1.3rem;
+                    //transform: translateY(0);
+                    //left: 0;
+                    opacity: 0;
+                }
+                &:-webkit-autofill ~ .gaia-input-group-label-hover-disappeared {
+                    font-size: 0.9em;
+                    //top: -1.3rem;
+                    //transform: translateY(0);
+                    //left: 0;
+                    opacity: 0;
+                }
+                &[value]:not([value=""]) ~ .gaia-input-group-label-hover-small {
+                    font-size: 0.7em;
+                    top: -0.7em;
+                    padding: 0.3em 0.75em;
+                    line-height: 1;
+                    .gaia-input-group-label-text {
+                        display: inline-block;
+                        background: #f1f2f4;
+                    }
+                }
+                &:-webkit-autofill  ~ .gaia-input-group-label-hover-small {
+                    font-size: 0.7em;
+                    top: -0.7em;
+                    padding: 0.3em 0.75em;
+                    line-height: 1;
+                    .gaia-input-group-label-text {
+                        display: inline-block;
+                        background: #f1f2f4;
+                    }
+                }
+                &:focus {
+                    border: 1.5px solid #2271bf;
+                }
+                &.required {
+                    -webkit-box-shadow: 0 2px 2px -2px #f80000;
+                    -moz-box-shadow: 0 2px 2px -2px #f80000;
+                    box-shadow:0 2px 2px -2px #f80000;
+                    //border: 1.5px solid #f80000;
+                }
+            }
+            .gaia-input-group-label {
+                position: relative;
+                color: #48484f;
+                //font-size: 1.1em;
+            }
+            .gaia-input-group-label-hover {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                line-height: 1.5;
+                padding: 0.375rem 0.75rem;
+                opacity: 1;
+                //left: 1rem;
+                pointer-events: none;
+                transition: all .1s;
+                //top: 50%;
+                //transform: translateY(-50%);
+                display: block;
+                z-index: 1;
+                color: #9f9fa5;
+                font-weight: 600;
+                font-size: 0.85em;
+                //font-size: 0.75em;
+            }
+            .gaia-input-group-label-text {
+                overflow: hidden;
+            }
+            .gaia-input-group-label-checkbox-text {
+                margin-top: 0.15em;
+            }
+
+            .gaia-input-group-label-plus {
+                position: relative;
+                cursor: pointer;
+                font-size: 1.3em;
+                vertical-align: top;
+                line-height: .9;
+            }
+        }
     }
 }
 

@@ -289,7 +289,8 @@ function setUpCustomChromeMenuOption(arr) {
         enabled: false,
         visible: false,
     });
-    if (arr && arr.length) {
+    const visibleArr = arr.filter(() => o.visible && o.title)
+    if (visibleArr && visibleArr.length) {
         let limit = 5;
         chrome.contextMenus.update(parentId,{
             enabled: true,
@@ -307,13 +308,15 @@ function setUpCustomChromeMenuOption(arr) {
             const item = arr[i]
             const idNum = i + 1;
             const id = 'Custom' + idNum;
-            chrome.contextMenus.update(id,{
-                title: item.title + ': "%s"',
-                enabled: true,
-                visible: true,
-            });
+            if (item.title) {
+                chrome.contextMenus.update(id, {
+                    title: item.title + ': "%s"',
+                    enabled: true,
+                    visible: item.visible,
+                });
+            }
             const objToSet = {}
-            objToSet[id] = item.title;
+            objToSet[id] = {title: item.title, visible: item.visible};
             chrome.storage.sync.set(objToSet)
         }
     }

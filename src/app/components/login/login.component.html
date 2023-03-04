@@ -6,6 +6,22 @@
         <form [ngSwitch]="formType">
             <div *ngSwitchCase="'login'">
                 <h3 class="text-center">Login</h3>
+<!--                <div class="gaia-input-group">-->
+<!--                    <input type="email" name="email" [(ngModel)]="email" [attr.value]="email" required>-->
+<!--                    <div class="gaia-input-group-label gaia-input-group-label-hover gaia-input-group-label-hover-small">-->
+<!--                        <div class="gaia-input-group-label-text">-->
+<!--                            Email-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="gaia-input-group mt-2">-->
+<!--                    <input type="password" name="password" [(ngModel)]="password" [attr.value]="password" required>-->
+<!--                    <div class="gaia-input-group-label gaia-input-group-label-hover gaia-input-group-label-hover-small">-->
+<!--                        <div class="gaia-input-group-label-text">-->
+<!--                            Password-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
                 <label for="email">Email</label>
                 <input type="email" name="email" class="form-control" id="email" [(ngModel)]="email" required>
                 <label for="password">Password</label>

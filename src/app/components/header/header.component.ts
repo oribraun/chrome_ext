@@ -24,6 +24,7 @@ export class HeaderComponent implements OnInit {
         // {title: 'test'}
     ];
     promptSettingLimit = 5;
+    promptSettingsError = '';
     constructor(
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
@@ -52,7 +53,11 @@ export class HeaderComponent implements OnInit {
                 const id = 'Custom' + idNum;
                 const obj = await chrome.storage.sync.get(id)
                 if (obj && obj[id]) {
-                    this.addPrompt(obj[id]);
+                    const title = obj[id].title;
+                    const visible = obj[id].visible;
+                    this.addPrompt(title, visible);
+                } else {
+                    this.addPrompt('', false);
                 }
             }
             if (this.promptSettings.length) {
@@ -62,10 +67,11 @@ export class HeaderComponent implements OnInit {
         }
     }
 
-    addPrompt(text: string = '') {
+    addPrompt(text: string = '', visible = true) {
         if (this.promptSettings.length < this.promptSettingLimit) {
             this.promptSettings.push({
                 title: text,
+                visible: visible,
             })
         }
     }
@@ -74,6 +80,16 @@ export class HeaderComponent implements OnInit {
     }
 
     savePrompt() {
+        this.promptSettingsError = '';
+        for (let i in this.promptSettings) {
+            if (this.promptSettings[i].visible && !this.promptSettings[i].title) {
+                this.promptSettingsError = 'your have enabled task with no title';
+                return;
+            }
+
+        }
+        // const tasksToSend = this.promptSettings.filter((o) => o.visible && o.title);
+        // console.log('tasksToSend', tasksToSend)
         if (chrome.runtime) {
             chrome.runtime.sendMessage({
                 type: "UPDATE_CUSTOM_PROMPT",

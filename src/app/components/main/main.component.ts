@@ -160,10 +160,10 @@ export class MainComponent implements OnInit, OnDestroy {
                 return;
             }
             this.chatGptNeedToRefreshToken = false;
-            if (!this.config.is_company) {
-                sendResponse({success: false, message: 'Unauthorized'});
-                return;
-            }
+            // if (!this.config.is_company) {
+            //     sendResponse({success: false, message: 'Unauthorized'});
+            //     return;
+            // }
             // this.resetModelResults();
             this.chatProcessPrompt(text)
             // this.apiService.getAnswer(text).subscribe(async (res: any) => {
@@ -199,6 +199,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.sentQuestion = true;
         this.scrollToBottom();
         this.forceBindChanges();
+        this.apiService.collectUserPrompt(text).subscribe();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
         this.sendMessageToChatGpt(text);

@@ -117,25 +117,40 @@
                 <h4 class="text-center">Hello {{user.username}}</h4>
                 <div class="prompts">
                     <div class="text-center position-relative">
-                        your right click custom prompts
+                        your right click custom tasks
                         <div class="add" (click)="addPrompt()">
                             <i class="bi bi-plus"></i>
                         </div>
                     </div>
                     <div class="list">
-                        <div class="input-wrapper" *ngFor="let item of promptSettings; let i = index">
-                            <div class="input-group m-2">
-                                <input type="text" class="form-control" [(ngModel)]="item.title">
+                        <div class="row gx-2 my-2 align-items-center" *ngFor="let item of promptSettings; let i = index">
+                            <div class="col-1">
+                                <input class="checkbox form-check-input" type="checkbox" [(ngModel)]="item.visible">
                             </div>
-                            <div class="remove" (click)="removePrompt(i)">
-                                <i class="bi bi-trash"></i>
+                            <div class="col-11">
+                                <div class="input-wrapper">
+                                    <div class="input-group">
+                                        <input class="input form-control" type="text" [placeholder]="'Custom Task'" [(ngModel)]="item.title">
+                                    </div>
+                                    <div class="remove" (click)="removePrompt(i)">
+                                        <i class="bi bi-trash"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        <!--                        <div class="input-wrapper" *ngFor="let item of promptSettings; let i = index">-->
+                        <!--                            <div class="input-group m-2">-->
+                        <!--                                <input type="text" class="form-control" [(ngModel)]="item.title">-->
+                        <!--                            </div>-->
+                        <!--                            <div class="remove" (click)="removePrompt(i)">-->
+                        <!--                                <i class="bi bi-trash"></i>-->
+                        <!--                            </div>-->
+                        <!--                        </div>-->
                     </div>
                 </div>
             </div>
             <div class="modal-footer text-center">
-<!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>-->
+                <!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>-->
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="savePrompt()">Save</button>
             </div>
         </div>
