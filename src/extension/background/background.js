@@ -289,7 +289,7 @@ function setUpCustomChromeMenuOption(arr) {
         enabled: false,
         visible: false,
     });
-    const visibleArr = arr.filter(() => o.visible && o.title)
+    const visibleArr = arr.filter((o) => o.visible && o.title)
     if (visibleArr && visibleArr.length) {
         let limit = 5;
         chrome.contextMenus.update(parentId,{

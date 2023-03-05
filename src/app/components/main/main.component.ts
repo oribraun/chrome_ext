@@ -43,6 +43,9 @@ export class MainComponent implements OnInit, OnDestroy {
 
     chatGptNeedToRefreshToken = false;
     chatGptCurrentMessage = '';
+    chatGptLastMessageId = '';
+    chatGptConversationId = '';
+    chatGptRequestGetConvIdProgress = false;
 
     scrollInProgress = false;
 
@@ -200,6 +203,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.scrollToBottom();
         this.forceBindChanges();
         this.apiService.collectUserPrompt(text).subscribe();
+        this.chatPrompt = '';
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
         this.sendMessageToChatGpt(text);
@@ -308,16 +312,16 @@ export class MainComponent implements OnInit, OnDestroy {
     scrollToBottom() {
         console.log('scrollToBottom')
         // if (!this.scrollInProgress) {
-            console.log('scrollToBottom2')
-            this.scrollInProgress = true;
-            if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
-                console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
-                $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
-                    this.scrollInProgress = false;
-                });
-            } else {
-                // window.scrollTo(0, document.body.scrollHeight);
-            }
+        console.log('scrollToBottom2')
+        this.scrollInProgress = true;
+        if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
+            console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
+            $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
+                this.scrollInProgress = false;
+            });
+        } else {
+            // window.scrollTo(0, document.body.scrollHeight);
+        }
         // }
     }
 
@@ -413,31 +417,70 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         this.chatGptNeedToRefreshToken = false;
         this.chatGptCurrentMessage = msg;
-        this.chromeExtensionService.sendMessageToChatGpt(msg);
+        this.chromeExtensionService.sendMessageToChatGpt(msg, this.chatGptConversationId, this.chatGptLastMessageId);
     }
     ListenToChatGpt() {
         this.chromeExtensionService.ListenFor('chatGptGotToken').subscribe((res) => {
+            console.log('got from chatGptGotToken', res)
             console.log('chatGptGotToken angular')
             this.chatGptNeedToRefreshToken = false;
             this.forceBindChanges();
         })
+        // this.chromeExtensionService.ListenFor('chatGptGetConversation').subscribe((res) => {
+        //     console.log('got from chatGptGetConversation', res)
+        //     this.chatGptConversationId = res.lastConversationId;
+        //     this.chatGptRequestGetConvIdProgress = false;
+        //     // const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId);
+        //     // this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
+        //     const msg = this.chromeExtensionService.genModerationsMessage(this.chatGptConversationId, this.chatGptCurrentMessage);
+        //     this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenModerations', msg)
+        // })
+        // this.chromeExtensionService.ListenFor('chatGptGenModerations').subscribe((res) => {
+        //     // res.title
+        //     console.log('got from chatGptGenModerations', res)
+        //
+        // })
+        this.chromeExtensionService.ListenFor('chatGptGenTitle').subscribe((res) => {
+            // res.title
+            console.log('got from chatGptGenTitle', res)
+
+        })
         this.chromeExtensionService.ListenFor('chatGptRequest').subscribe((res) => {
+            console.log('ListenToChatGpt msg', res)
             if (res.answer && res.answer.done) {
+                const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
+                this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
                 this.chatGptCurrentMessage = '';
                 return;
             }
             if (res.answer) {
-                if (res.answer === 'Unauthorized') {
+                if (res.answer.text === 'Unauthorized') {
                     this.chatGptNeedToRefreshToken = true;
                     this.chatGptCurrentMessage = '';
                     console.log('ListenToChatGpt Unauthorized msg', res)
                 } else {
-                    console.log('ListenToChatGpt msg', res)
+                    // console.log('ListenToChatGpt msg', res)
+                    // if (!this.chatGptConversationId && !this.chatGptRequestGetConvIdProgress) {
+                    //     console.log('trying to get conversation id', res)
+                    //     this.chatGptRequestGetConvIdProgress = true;
+                    //     this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGetConversation', {})
+                    // }
                 }
-                if (res.answer !== this.chatGptCurrentMessage) {
-                    this.chat[this.chat.length - 1].text = res.answer
+                if (res.answer.text !== this.chatGptCurrentMessage) {
+                    const conversation_id = res.answer.data.conversation_id;
+                    const message_id = res.answer.data.message.id;
+                    console.log('ListenToChatGpt conversation_id', conversation_id)
+                    console.log('ListenToChatGpt message_id', message_id)
+                    if (conversation_id) {
+                        this.chatGptConversationId = conversation_id;
+                    }
+                    if (message_id) {
+                        this.chatGptLastMessageId = message_id;
+                    }
+                    this.chat[this.chat.length - 1].text = res.answer.text
                     this.sentQuestion = false
-                    this.chatGptCurrentMessage = '';
+                    this.chatPrompt = '';
+                    // this.chatGptCurrentMessage = '';
                     this.scrollToBottom();
                 }
                 this.forceBindChanges();

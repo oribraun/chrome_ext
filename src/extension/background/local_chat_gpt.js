@@ -15,7 +15,9 @@ const storageKey = "gaia-chatgpt-token"
 
 class ChatGPTClient {
     chatGPTUrl = "https://chat.openai.com/chat";
+    chatGptBackendApi = 'https://chat.openai.com/backend-api/';
     chatGPTApiUrl = "https://chat.openai.com/backend-api/conversation";
+    chatGptGetConversationUrl = 'https://chat.openai.com/backend-api/conversations?offset=0&limit=20'
     creatingWindow = false;
 
     constructor() {
@@ -24,13 +26,13 @@ class ChatGPTClient {
 
     init = async () => {
         this.getAccessTokenFromApi().then(() => {
-            // console.log('getAccessTokenFromApi success', this.accessToken)
+            console.log('getAccessTokenFromApi success', this.accessToken)
         }).catch(() => {
-            // console.log('getAccessTokenFromApi rejected')
+            console.log('getAccessTokenFromApi rejected')
             this.getTokenFromStorage().then(() => {
-                // console.log('getTokenFromStorage success', this.accessToken)
+                console.log('getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                // console.log('getTokenFromStorage rejected')
+                console.log('getTokenFromStorage rejected')
                 this.tryToGetFromWindow()
             });
         })
@@ -74,13 +76,13 @@ class ChatGPTClient {
     removeWindow(window_id) {
         setTimeout(() => {
             this.getTokenFromStorage().then(() => {
-                // console.log('removeWindow getTokenFromStorage success', this.accessToken)
+                console.log('removeWindow getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                // console.log('removeWindow getTokenFromStorage rejected')
+                console.log('removeWindow getTokenFromStorage rejected')
                 this.getAccessTokenFromApi().then(() => {
-                    // console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
+                    console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
                 }).catch(() => {
-                    // console.log('removeWindow getAccessTokenFromApi rejected')
+                    console.log('removeWindow getAccessTokenFromApi rejected')
                 })
             });
             // console.log('this.accessToken', this.accessToken)
@@ -142,9 +144,11 @@ class ChatGPTClient {
                             return cb({ done: true });
                         } else {
                             const data = JSON.parse(`${str}`);
+                            // const message_id = data.message.id;
+                            // const conversation_id = data.conversation_id;
                             const text = data.message?.content?.parts?.[0];
                             if (text) {
-                                cb(text);
+                                cb({text: text, data: data});
                             }
                         }
                     });
@@ -197,6 +201,64 @@ class ChatGPTClient {
 
         const resJson = await resp.json();
         return { models: resJson?.models ?? [], statusCode: resp.status };
+    }
+
+    getLastConversation = async () => {
+        const resp = await fetch("https://chat.openai.com/backend-api/conversations?offset=0&limit=20", {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.accessToken}`
+            },
+        });
+
+        if (resp.status === 401 || resp.status === 403) return { models: [], statusCode: resp.status };
+
+        const resJson = await resp.json();
+        let lastConversationId = '';
+        if (resJson?.items && resJson?.items.length) {
+            lastConversationId = resJson.items[0].id;
+        }
+        return { lastConversationId: lastConversationId, statusCode: resp.status };
+    }
+
+    generateModerations = async (conversationId, input, message_id) => {
+        const resp = await fetch("https://chat.openai.com/backend-api/moderations", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.accessToken}`,
+            },
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                input: input,
+                message_id: message_id,
+                model: "text-moderation-playground"
+            }),
+        });
+
+        if (resp.status === 401 || resp.status === 403) return { models: [], statusCode: resp.status };
+
+        const resJson = await resp.json();
+        return { moderation_id: resJson.moderation_id, statusCode: resp.status };
+    }
+
+    generateConversationTitle = async (conversationId, message_id, model) => {
+        const resp = await fetch("https://chat.openai.com/backend-api/conversation/gen_title/" + conversationId, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.accessToken}`,
+            },
+            body: JSON.stringify({
+                message_id: message_id,
+                model: model,
+            }),
+        });
+
+        if (resp.status === 401 || resp.status === 403) return { models: [], statusCode: resp.status };
+
+        const resJson = await resp.json();
+        return { title: resJson.title, statusCode: resp.status };
     }
 
     openChatGPT = () => {
@@ -347,9 +409,24 @@ try {
                 if (msg.type === 'chatGptRequest') {
                     if (msg.payload) {
                         chatgpt.generateChatGPTReponse(msg.payload, (answer) => {
-                            if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer});
+                            if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: answer});
                         });
                     }
+                }
+                // if (msg.type === 'chatGptGetConversation') {
+                //     chatgpt.getLastConversation().then((res) => {
+                //         if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, lastConversationId: res.lastConversationId});
+                //     });
+                // }
+                if (msg.type === 'chatGptGenModerations') {
+                    chatgpt.generateModerations(msg.conversation_id, msg.input, msg.message_id).then((res) => {
+                        if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, moderation_id: res.moderation_id});
+                    });
+                }
+                if (msg.type === 'chatGptGenTitle') {
+                    chatgpt.generateConversationTitle(msg.conversation_id, msg.message_id, msg.model).then((res) => {
+                        if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, title: res.title});
+                    });
                 }
                 if (msg.type === 'chatGptRefreshToken') {
                     chatgpt.getTokenFromStorage().then(() => {
@@ -359,6 +436,7 @@ try {
                     });
                 }
                 if (msg.type === 'chatGptGotToken') {
+                    console.log('msg', msg)
                     chatgpt.updateAccessToken(msg.token);
                     // port.postMessage({port: port.name, type: 'chatGptGotToken', token: msg.token});
                     for (let tab_id in tabStore) {

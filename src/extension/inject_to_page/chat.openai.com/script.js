@@ -138,6 +138,9 @@ async function onInitAngular(debug=false) {
         function forceContinue() {
             button_click_do_original = true;
             button.click();
+            setTimeout(() => {
+                textarea_clone.value = '';
+            })
         }
 
         sendHostNameToContentScript();
@@ -278,13 +281,13 @@ function getTokenFromChatGpt() {
     if (window.location.host === 'chat.openai.com') {
         interval = setInterval((() => {
             tryToGetToken();
-        }), 1000)
+        }), 500)
         tryToGetToken();
     }
 }
 
 function tryToGetToken() {
-    // console.log('getTokenFromChatGpt interval')
+    console.log('getTokenFromChatGpt interval')
     var e = document.querySelector('script[id="__NEXT_DATA__"]');
     if (e && e.textContent) {
         var textContent = e.textContent;

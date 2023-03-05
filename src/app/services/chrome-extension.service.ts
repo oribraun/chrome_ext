@@ -21,7 +21,8 @@ export class ChromeExtensionService {
     private lastChatGptId: string;
     private chatGptPort: any
     private chatGptListener: any
-    private chatGptParentId: string;
+    private chatGptLastMessageId: string;
+    private chatGptLastParentId: string;
     constructor(
         private config: Config,
         // private router: MyRouter
@@ -81,23 +82,49 @@ export class ChromeExtensionService {
         );
     };
 
-    createMessage(message: string) {
-        if (!this.chatGptParentId) {
-            this.chatGptParentId = this.uuidv4();
+    createMessage(message: string, conversation_id = '', last_message_id = '') {
+        if (!this.chatGptLastParentId) {
+            this.chatGptLastParentId = this.uuidv4();
         }
-        return {
+        if (this.chatGptLastMessageId) {
+            this.chatGptLastParentId = this.chatGptLastMessageId;
+        }
+        if (last_message_id) {
+            this.chatGptLastParentId = last_message_id;
+        }
+        this.chatGptLastMessageId = this.uuidv4();
+        const o: any = {
             action: "next",
-            conversation_id: this.chatGptParentId,
             messages: [{
-                id: this.uuidv4(),
+                id: this.chatGptLastMessageId,
                 role: "user",
                 content: {
                     content_type: "text",
                     parts: [message]
                 }
             }],
-            model: "text-davinci-002-render",
-            parent_message_id: this.uuidv4()
+            model: "text-davinci-002-render-sha",
+            parent_message_id: this.chatGptLastParentId
+        }
+        if (conversation_id) {
+            o.conversation_id = conversation_id;
+        }
+        return o;
+    }
+
+    genTitleMessage(conversation_id = '', last_message_id = '') {
+        return {
+            conversation_id: conversation_id,
+            message_id: last_message_id,
+            model: "text-davinci-002-render-sha",
+        }
+    }
+
+    genModerationsMessage(conversation_id = '', input = '') {
+        return {
+            input: input,
+            conversation_id: conversation_id,
+            message_id: this.chatGptLastMessageId,
         }
     }
 
@@ -131,9 +158,15 @@ export class ChromeExtensionService {
         this.chatGptPort.onMessage.removeListener(this.chatGptListener);
     }
 
-    sendMessageToChatGpt(message: string) {
+    sendMessageToChatGpt(message: string, conversation_id = '', last_message_id = '') {
         if (this.chatGptPort) {
-            this.chatGptPort.postMessage({type: 'chatGptRequest', payload: this.createMessage(message)});
+            this.chatGptPort.postMessage({type: 'chatGptRequest', payload: this.createMessage(message, conversation_id, last_message_id)});
+        }
+    }
+
+    generalSendMessageToChatGpt(type: string, obj: any) {
+        if (this.chatGptPort) {
+            this.chatGptPort.postMessage({type: type, ...obj});
         }
     }
 
