@@ -353,6 +353,21 @@ export class ChromeExtensionService {
             console.log('s2', res);
         })
     }
+
+    sendAnalytics(event: string, type: string, data:any = '') {
+        if (chrome.runtime) {
+            chrome.runtime.sendMessage({
+                type: "SEND_ANALYTICS",
+                details: {
+                    // "event": "ask-button-executed",
+                    // "type": "general-ask-button-click"
+                    event: event,
+                    type: type,
+                    data: data,
+                }
+            })
+        }
+    }
 }
 
 interface EventsHashTable<T> {

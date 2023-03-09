@@ -14,7 +14,7 @@
     "start": "npm run watch",
     "watch": "ng build --watch --configuration=development",
     "build": "ng build --configuration=production",
-    "build-stg": "ng build --configuration=staging",
+    "build-stg": "ng build --configuration=staging --watch",
     "build-prd": "ng build --configuration=production",
     "build-ext": "ng build --configuration=extension",
     "build-ext-zip": "ng build --configuration=extension & node minify.js & npm run zip-build",

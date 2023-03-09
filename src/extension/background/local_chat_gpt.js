@@ -1,19 +1,9 @@
+import {tabsManager} from "./tab_store.js";
 
-
-var tabStore = {};         // <-- Collection of tabs
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    tabStore[tabId] = tab;
-    // console.log('onUpdated tabStore', tabStore)
-});
-chrome.tabs.onRemoved.addListener(function(tabId) {
-    delete tabStore[tabId];
-    // console.log('onRemoved tabStore', tabStore)
-});
-
-
-const storageKey = "gaia-chatgpt-token"
+// console.log('tabsManager', tabsManager.tabStore)
 
 class ChatGPTClient {
+    storageKey = "gaia-chatgpt-token"
     chatGPTUrl = "https://chat.openai.com/chat";
     chatGptBackendApi = 'https://chat.openai.com/backend-api/';
     chatGPTApiUrl = "https://chat.openai.com/backend-api/conversation";
@@ -41,9 +31,9 @@ class ChatGPTClient {
     getTokenFromStorage = () => {
         return new Promise((resolve, reject) => {
             chrome.storage.local
-                .get(storageKey)
+                .get(this.storageKey)
                 .then((result) => {
-                    this.accessToken = result[storageKey];
+                    this.accessToken = result[this.storageKey];
                     if (this.accessToken) {
                         resolve(1);
                     } else {
@@ -104,7 +94,7 @@ class ChatGPTClient {
         const maxRequestCount = models.length < 5 ? 5 : models.length;
 
         const sendRequestToChatGPT = async () => {
-            if (requestCount > maxRequestCount) return cb("Unauthorized");
+            if (requestCount > maxRequestCount) return cb({text:"Unauthorized"});
 
             const resp = await fetch(this.chatGPTApiUrl, {
                 method: "POST",
@@ -119,16 +109,26 @@ class ChatGPTClient {
             requestCount++;
 
             if (resp.status === 401 || resp.status === 403) {
-                // sendAnalytics({ event: "error", type: resp.status });
-                return cb("Unauthorized");
+                sendAnalytics({ event: "error", type: resp.status });
+                return cb({text:"Unauthorized"});
+            }
+            if (resp.status === 429) { // to many requests
+                const resJson = await resp.json();
+                sendAnalytics({ event: "error", type: resp.status, data: resJson });
+                return cb({text:resJson?.detail, toManyRequests: true});
+            }
+            if (resp.status === 413) { // to many requests
+                const resJson = await resp.json();
+                sendAnalytics({ event: "error", type: resp.status, data: resJson });
+                return cb({text:resJson?.detail?.message, messageLength: true});
             }
             if ([400, 404, 422, 500].includes(resp.status)) {
                 if (retryCount < models.length) {
                     retryCount++;
                     return sendRequestToChatGPT();
                 }
-                // sendAnalytics({ event: "error", type: resp.status });
-                return cb("Unauthorized");
+                sendAnalytics({ event: "error", type: resp.status });
+                return cb({text:"Unauthorized"});
             }
 
             for await (const chunk of this.streamAsyncIterable(resp.body)) {
@@ -163,13 +163,19 @@ class ChatGPTClient {
     updateAccessToken = (token) => {
         this.accessToken = token;
         const obj = {}
-        obj[storageKey] = token;
+        obj[this.storageKey] = token;
         chrome.storage.local.set(obj);
     };
 
     getAccessTokenFromApi = async () => {
         return new Promise((resolve, reject) => {
-            fetch("https://chat.openai.com/api/auth/session").then(async (response) => {
+            const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
+            fetch("https://chat.openai.com/api/auth/session", {
+                headers: {
+                    cookie: `__Secure-next-auth.session-token=${this.accessToken}`,
+                    "user-agent": userAgent
+                }
+            }).then(async (response) => {
                 // console.log('response', response);
                 if (response.status === 200) {
                     let json = await response.json()
@@ -340,17 +346,22 @@ const getUniqueId = async () => {
     return uniqueId;
 };
 
+function isObject(obj) {
+    return obj !== undefined && obj !== null && obj.constructor == Object;
+}
 const sendAnalytics = async (details) => {
 
     const payload = {
         event: details.event,
         properties: {
             distinct_id: await getUniqueId(),
-            token: "",
-            type: details.type
+            token: "d4af68efc97684ea4e001d1e662c335a",
+            type: details.type,
         }
-
     };
+    if (details?.data && isObject(details?.data)) {
+        payload.properties = {...payload.properties, ...details?.data}
+    }
 
     const resp = await fetch("https://api.mixpanel.com/track/?ip=1&verbose=1", {
         method: "POST",
@@ -435,11 +446,28 @@ try {
                         // console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
                     });
                 }
+                if (msg.type === 'chatGptGetSessionToken') {
+                    if (!chatgpt.accessToken) {
+                        chatgpt.getAccessTokenFromApi().then(() => {
+                            if (chatgpt.accessToken) {
+                                for (let tab_id in tabsManager.tabStore) {
+                                    chrome.tabs.sendMessage(parseInt(tab_id), {
+                                        type: 'chatGptGotToken',
+                                        token: chatgpt.accessToken
+                                    });
+                                }
+                            }
+                            // console.log('chatGptPortRefreshToken getTokenFromStorage success', this.accessToken)
+                        }).catch(() => {
+                            // console.log('chatGptPortRefreshToken getTokenFromStorage rejected')
+                        });
+                    }
+                }
                 if (msg.type === 'chatGptGotToken') {
                     console.log('msg', msg)
                     chatgpt.updateAccessToken(msg.token);
                     // port.postMessage({port: port.name, type: 'chatGptGotToken', token: msg.token});
-                    for (let tab_id in tabStore) {
+                    for (let tab_id in tabsManager.tabStore) {
                         chrome.tabs.sendMessage(parseInt(tab_id), {type: 'chatGptGotToken', token: msg.token});
                     }
                     // chrome.tabs.query({}, function(tabs) {
@@ -463,7 +491,7 @@ try {
                 chatgpt.updateAccessToken(msg.token);
                 break;
             case "SEND_ANALYTICS":
-                // sendAnalytics(msg.details);
+                sendAnalytics(msg.details);
                 break;
             default:
                 break;

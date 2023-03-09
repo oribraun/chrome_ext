@@ -60,7 +60,7 @@
     <div class="menu absolute-menu">
         <ul class="menu-list menu-list-top">
             <li class="menu-item menu-item-pull-right">
-                <a class="menu-link" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <a class="menu-link" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal" (click)="getPromptSettingsApi()">
                     <i class="bi bi-gear pointer" title="Settings"></i>
                 </a>
                 <!--                <a class="menu-link" href="#">-->
@@ -151,7 +151,7 @@
             </div>
             <div class="modal-footer text-center">
                 <!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>-->
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="savePrompt()">Save</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="savePromptToApi()">Save</button>
             </div>
         </div>
     </div>

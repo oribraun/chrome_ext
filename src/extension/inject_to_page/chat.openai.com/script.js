@@ -279,10 +279,21 @@ if (typeof window.extentionLastEventListeners !== 'object') {
 var interval;
 function getTokenFromChatGpt() {
     if (window.location.host === 'chat.openai.com') {
-        interval = setInterval((() => {
-            tryToGetToken();
-        }), 500)
-        tryToGetToken();
+        // interval = setInterval((() => {
+        //     tryToGetToken();
+        // }), 500)
+        var interval_max = 5;
+        var interval = setInterval(() => {
+            console.log('chatGptGetSessionToken')
+            if (chrome.runtime) {
+                var chatGptPort = chrome.runtime.connect({name: "chatGptPort"});
+                chatGptPort.postMessage({type: 'chatGptGetSessionToken'});
+            }
+            interval_max--;
+            if (!interval_max) {
+                clearInterval(interval)
+            }
+        }, 500)
     }
 }
 

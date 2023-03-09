@@ -1,108 +1,311 @@
 
-chrome.runtime.onMessage.addListener((msg) => {
-    // console.log('msg', msg)
-    switch (msg.type) {
-        case "UPDATE_CUSTOM_PROMPT":
-            // sendAnalytics(msg.details);
-            if (msg.arr && msg.arr.length) {
-                setUpCustomChromeMenuOption(msg.arr)
-            }
-            break;
-        default:
-            break;
+class GaiaExtension {
+    constructor() {
+        this.init();
     }
 
-});
-chrome.action.onClicked.addListener(function(tab) {
-    if (tab.url && !tab.url.startsWith("chrome://")) {
-        if (tab.url.indexOf("?internalWindow") === -1) {
-            injectSideMenuWithAngular(tab.id);
-        }
-        var url = new URL(tab.url);
-        injectContentHostScript(tab.id, url.hostname)
-    }
-})
-
-// inject sidebar and chat gpt scripts when page loaded
-// chrome.tabs.onUpdated.addListener(function (tabId , info, tab) {
-//     if (info.status === 'complete') {
-//         console.log('onUpdated complete event', info)
-//         if (tab.url && !tab.url.startsWith("chrome://")) {
-//             injectSideMenuWithAngular(tab.id);
-//             console.log('tabId1', tabId)
-//         //     var url = new URL(tab.url);
-//         //     injectContentHostScript(tab.id, url.hostname)
-//         }
-//     }
-// });
-chrome.webNavigation.onCompleted.addListener(function(event) {
-    if (event.frameType === 'outermost_frame') {
-        if (event.url && event.tabId && event.url.indexOf('internalPopUp') === -1) {
-            if (!event.url.startsWith("chrome://")) {
-                try {
-                    var url = new URL(event.url);
-                    injectContentHostScript(event.tabId, url.hostname)
-                    // when detecting page inject side menu as well
-                    if (event.url.indexOf("?internalWindow") === -1) {
-                        injectSideMenuWithAngular(event.tabId);
+    init() {
+        chrome.runtime.onMessage.addListener((msg) => {
+            // console.log('msg', msg)
+            switch (msg.type) {
+                case "UPDATE_CUSTOM_PROMPT":
+                    // sendAnalytics(msg.details);
+                    if (msg.arr && msg.arr.length) {
+                        this.setUpCustomChromeMenuOptions(msg.arr)
                     }
-                } catch (e) {
-                    return e;
+                    break;
+                default:
+                    break;
+            }
+
+        });
+        chrome.action.onClicked.addListener((tab) => {
+            if (tab.url && !tab.url.startsWith("chrome://")) {
+                if (tab.url.indexOf("?internalWindow") === -1) {
+                    this.injectSideMenuWithAngular(tab.id);
+                }
+                var url = new URL(tab.url);
+                this.injectContentHostScript(tab.id, url.hostname)
+            }
+        })
+
+        // inject sidebar and chat gpt scripts when page loaded
+        // chrome.tabs.onUpdated.addListener(function (tabId , info, tab) {
+        //     if (info.status === 'complete') {
+        //         console.log('onUpdated complete event', info)
+        //         if (tab.url && !tab.url.startsWith("chrome://")) {
+        //             injectSideMenuWithAngular(tab.id);
+        //             console.log('tabId1', tabId)
+        //         //     var url = new URL(tab.url);
+        //         //     injectContentHostScript(tab.id, url.hostname)
+        //         }
+        //     }
+        // });
+        chrome.webNavigation.onCompleted.addListener((event) => {
+            if (event.frameType === 'outermost_frame') {
+                if (event.url && event.tabId && event.url.indexOf('internalPopUp') === -1) {
+                    if (!event.url.startsWith("chrome://")) {
+                        try {
+                            var url = new URL(event.url);
+                            this.injectContentHostScript(event.tabId, url.hostname)
+                            // when detecting page inject side menu as well
+                            if (event.url.indexOf("?internalWindow") === -1) {
+                                this.injectSideMenuWithAngular(event.tabId);
+                            }
+                        } catch (e) {
+                            return e;
+                        }
+                    }
                 }
             }
-        }
-    }
-}, {
-    // url: [{urlMatches : 'https://chat.openai.com/chat'}]
-});
-
-chrome.runtime.onInstalled.addListener(function (object) {
-    // let externalUrl = "http://yoursite.com/";
-    var internalUrl = chrome.runtime.getURL("extension/pages/welcome/welcome.html"); // welcome page
-
-    if (object.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-        chrome.tabs.create({ url: internalUrl }, function (tab) {
-            // console.log("New tab launched");
+        }, {
+            // url: [{urlMatches : 'https://chat.openai.com/chat'}]
         });
+
+        chrome.runtime.onInstalled.addListener( (object) => {
+            // let externalUrl = "http://yoursite.com/";
+            var internalUrl = chrome.runtime.getURL("extension/pages/welcome/welcome.html"); // welcome page
+
+            if (object.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+                chrome.tabs.create({ url: internalUrl }, function (tab) {
+                    // console.log("New tab launched");
+                });
+            }
+            this.setUpChromeMenuOption();
+        });
+
+        chrome.contextMenus.onClicked.addListener(function(info, tab) {
+            const storageKey = "gaia-chatgpt-token"
+            let text = info.selectionText;
+            let item_title = '';
+            chrome.storage.local.get(storageKey, function (obj) {
+                // console.log('storageKey obj', obj)
+                if (obj && obj[storageKey]) {
+                    // console.log('info', info)
+                    if (info.menuItemId === 'gaiaSummarize') {
+                        item_title = 'Summarize:';
+                        text = item_title + '\n ' + text;
+                    } else if (info.menuItemId === 'gaiaAsk') {
+                        item_title = 'Ask:';
+                        text = item_title + '\n ' + text;
+                    } else if (info.menuItemId === 'gaiaExpend') {
+                        item_title = 'Expend:';
+                        text = item_title + '\n ' + text;
+                    } else {
+                        const orig_text = text;
+                        text = '';
+                        chrome.storage.sync.get(info.menuItemId, function (obj) {
+                            if (obj && obj[info.menuItemId]) {
+                                item_title = obj[info.menuItemId].title + ':';
+                                text = item_title  + '\n' + orig_text;
+                                chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text, title: item_title});
+                            }
+                        })
+                    }
+                    if (text) {
+                        chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text, title: item_title});
+                    }
+                } else {
+                    chrome.tabs.sendMessage(tab.id, {type: 'chat', noGptToken: true, text: text, title: 'none'});
+                }
+            })
+        })
     }
-    setUpChromeMenuOption();
-});
 
-function injectSideMenuWithAngular(tab_id) {
-    chrome.scripting.executeScript({
-        target: {tabId: tab_id, allFrames: false},
-        files: [
-            'extension/scripts/side_menu.js'
-        ]
-    }).then(() => console.log("script injected in one frame"));
-    chrome.scripting.insertCSS({
-        target: { tabId: tab_id, allFrames: false},
-        files: ["extension/scripts/side_menu.css"]
-    }).then(() => console.log("css injected in one frame"));
-}
-
-function injectContentHostScript(tab_id, host) {
-    let url = chrome.runtime.getURL('extension/inject_to_page/' + host + '/script.js');
-    fetch(url).then((res) => {
+    injectSideMenuWithAngular(tab_id) {
         chrome.scripting.executeScript({
             target: {tabId: tab_id, allFrames: false},
             files: [
-                'extension/inject_to_page/' + host + '/script.js'
+                'extension/scripts/side_menu.js'
             ]
-        });
+        }).then(() => console.log("script injected in one frame"));
         chrome.scripting.insertCSS({
             target: { tabId: tab_id, allFrames: false},
-            files: [
-                'extension/inject_to_page/' + host + '/script.css'
-            ]
+            files: ["extension/scripts/side_menu.css"]
+        }).then(() => console.log("css injected in one frame"));
+    }
+
+    injectContentHostScript(tab_id, host) {
+        let url = chrome.runtime.getURL('extension/inject_to_page/' + host + '/script.js');
+        fetch(url).then((res) => {
+            chrome.scripting.executeScript({
+                target: {tabId: tab_id, allFrames: false},
+                files: [
+                    'extension/inject_to_page/' + host + '/script.js'
+                ]
+            });
+            chrome.scripting.insertCSS({
+                target: { tabId: tab_id, allFrames: false},
+                files: [
+                    'extension/inject_to_page/' + host + '/script.css'
+                ]
+            });
+        }, (err) => {
+
+        })
+    }
+    sendHostNameToContentScript(tab_id, host) {
+        chrome.tabs.sendMessage(tab_id, {type: 'init-from-background', host: host});
+    }
+
+    getUserDetails() {
+        chrome.identity.getProfileUserInfo(async function(userInfo) {
+            // console.log('userInfo.email', userInfo.email)
+            var domain = userInfo.email.substring(userInfo.email.indexOf('@') + 1);
+            // console.log('domain', domain)
+            // var auth = new google.auth.GoogleAuth({
+            //     scopes: ['https://www.googleapis.com/auth/admin.directory.domain.readonly']
+            // });
+            // var client = await auth.getClient();
+            // var admin = google.admin({version: 'directory_v1', auth: client});
+            // var response = await admin.domains.get({domainName: domain});
+            // console.log(response.data);
         });
-    }, (err) => {
+    }
 
-    })
-}
+    setUpChromeMenuOption() {
+        // var parent = chrome.contextMenus.create({"title": "Gaia", "id": "gaiaMain"});
+        // var child1 = chrome.contextMenus.create(
+        //     {"title": "Summarize:", "parentId": parent, contexts: ["selection"], "id": "gaiaSummarize"});
+        // var child2 = chrome.contextMenus.create(
+        //     {"title": "Ask:", "parentId": parent, contexts: ["selection"], "id": "gaiaAsk"});
+        chrome.contextMenus.create({
+            title: 'Gaia',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            id: "gaiaMain"
+        });
+        chrome.contextMenus.create({
+            title: 'Summarize: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            parentId: "gaiaMain",
+            id: "gaiaSummarize"
+        });
+        chrome.contextMenus.create({
+            title: 'Ask: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            parentId: "gaiaMain",
+            id: "gaiaAsk"
+        });
+        chrome.contextMenus.create({
+            title: 'Expend: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            parentId: "gaiaMain",
+            id: "gaiaExpend"
+        });
+        const parentId = "customPrompt";
+        chrome.contextMenus.create({
+            title: 'Custom Prompt',
+            parentId: "gaiaMain",
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            id: parentId
+        });
+        chrome.contextMenus.create({
+            title: 'Custom1: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            parentId: parentId,
+            id: 'Custom1'
+        });
+        chrome.contextMenus.create({
+            title: 'Custom2: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            parentId: parentId,
+            id: 'Custom2'
+        });
+        chrome.contextMenus.create({
+            title: 'Custom3: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            parentId: parentId,
+            id: 'Custom3'
+        });
+        chrome.contextMenus.create({
+            title: 'Custom4: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            parentId: parentId,
+            id: 'Custom4'
+        });
+        chrome.contextMenus.create({
+            title: 'Custom5: "%s"',
+            // "title": 'Gaia To Chat "%s"',
+            contexts: ["selection"],
+            enabled: false,
+            visible: false,
+            parentId: parentId,
+            id: 'Custom5'
+        });
+        // chrome.contextMenus.create({
+        //     "title": 'Send To Chat "%s"',
+        //     contexts: ["selection"],
+        //     "id": "myContextMenuId"
+        // });
+        // chrome.contextMenus.create({
+        //     "title": 'Send To Chat "%s"',
+        //     contexts: ["selection"],
+        //     "id": "myContextMenuId"
+        // });
+    }
 
-function sendHostNameToContentScript(tab_id, host) {
-    chrome.tabs.sendMessage(tab_id, {type: 'init-from-background', host: host});
+    setUpCustomChromeMenuOptions(arr) {
+        const mainMenuId = "gaiaMain"
+        // var parent = chrome.contextMenus.create({"title": "Gaia", "id": "gaiaMain"});
+        // var child1 = chrome.contextMenus.create(
+        //     {"title": "Summarize:", "parentId": parent, contexts: ["selection"], "id": "gaiaSummarize"});
+        // var child2 = chrome.contextMenus.create(
+        //     {"title": "Ask:", "parentId": parent, contexts: ["selection"], "id": "gaiaAsk"});
+        const parentId = "customPrompt";
+        chrome.contextMenus.update(parentId,{
+            enabled: false,
+            visible: false,
+        });
+        const visibleArr = arr.filter((o) => o.visible && o.title)
+        if (visibleArr && visibleArr.length) {
+            let limit = 5;
+            chrome.contextMenus.update(parentId,{
+                enabled: true,
+                visible: true,
+            });
+            for (let i = 0; i < limit; i++) {
+                const idNum = i + 1;
+                chrome.contextMenus.update('Custom' + idNum,{
+                    enabled: false,
+                    visible: false,
+                });
+            }
+            limit = arr.length > 5 ? 5 : arr.length;
+            for (let i = 0; i < limit; i++) {
+                const item = arr[i]
+                const idNum = i + 1;
+                const id = 'Custom' + idNum;
+                if (item.title) {
+                    chrome.contextMenus.update(id, {
+                        title: item.title + ': "%s"',
+                        enabled: true,
+                        visible: item.visible,
+                    });
+                }
+                // const objToSet = {}
+                // objToSet[id] = {title: item.title, visible: item.visible};
+                // chrome.storage.sync.set(objToSet)
+            }
+        }
+    }
 }
 
 // chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -164,196 +367,6 @@ function sendHostNameToContentScript(tab_id, host) {
 //     chrome.policy.PolicyService.setPolicy(apiKeyPolicy);
 // });
 
-chrome.identity.getProfileUserInfo(async function(userInfo) {
-    // console.log('userInfo.email', userInfo.email)
-    var domain = userInfo.email.substring(userInfo.email.indexOf('@') + 1);
-    // console.log('domain', domain)
-    // var auth = new google.auth.GoogleAuth({
-    //     scopes: ['https://www.googleapis.com/auth/admin.directory.domain.readonly']
-    // });
-    // var client = await auth.getClient();
-    // var admin = google.admin({version: 'directory_v1', auth: client});
-    // var response = await admin.domains.get({domainName: domain});
-    // console.log(response.data);
-});
-
-function setUpChromeMenuOption() {
-    // var parent = chrome.contextMenus.create({"title": "Gaia", "id": "gaiaMain"});
-    // var child1 = chrome.contextMenus.create(
-    //     {"title": "Summarize:", "parentId": parent, contexts: ["selection"], "id": "gaiaSummarize"});
-    // var child2 = chrome.contextMenus.create(
-    //     {"title": "Ask:", "parentId": parent, contexts: ["selection"], "id": "gaiaAsk"});
-    chrome.contextMenus.create({
-        title: 'Gaia',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        id: "gaiaMain"
-    });
-    chrome.contextMenus.create({
-        title: 'Summarize: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        parentId: "gaiaMain",
-        id: "gaiaSummarize"
-    });
-    chrome.contextMenus.create({
-        title: 'Ask: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        parentId: "gaiaMain",
-        id: "gaiaAsk"
-    });
-    chrome.contextMenus.create({
-        title: 'Expend: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        parentId: "gaiaMain",
-        id: "gaiaExpend"
-    });
-    const parentId = "customPrompt";
-    chrome.contextMenus.create({
-        title: 'Custom Prompt',
-        parentId: "gaiaMain",
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        id: parentId
-    });
-    chrome.contextMenus.create({
-        title: 'Custom1: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        parentId: parentId,
-        id: 'Custom1'
-    });
-    chrome.contextMenus.create({
-        title: 'Custom2: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        parentId: parentId,
-        id: 'Custom2'
-    });
-    chrome.contextMenus.create({
-        title: 'Custom3: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        parentId: parentId,
-        id: 'Custom3'
-    });
-    chrome.contextMenus.create({
-        title: 'Custom4: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        parentId: parentId,
-        id: 'Custom4'
-    });
-    chrome.contextMenus.create({
-        title: 'Custom5: "%s"',
-        // "title": 'Gaia To Chat "%s"',
-        contexts: ["selection"],
-        enabled: false,
-        visible: false,
-        parentId: parentId,
-        id: 'Custom5'
-    });
-    // chrome.contextMenus.create({
-    //     "title": 'Send To Chat "%s"',
-    //     contexts: ["selection"],
-    //     "id": "myContextMenuId"
-    // });
-    // chrome.contextMenus.create({
-    //     "title": 'Send To Chat "%s"',
-    //     contexts: ["selection"],
-    //     "id": "myContextMenuId"
-    // });
-}
-
-
-function setUpCustomChromeMenuOption(arr) {
-    const mainMenuId = "gaiaMain"
-    // var parent = chrome.contextMenus.create({"title": "Gaia", "id": "gaiaMain"});
-    // var child1 = chrome.contextMenus.create(
-    //     {"title": "Summarize:", "parentId": parent, contexts: ["selection"], "id": "gaiaSummarize"});
-    // var child2 = chrome.contextMenus.create(
-    //     {"title": "Ask:", "parentId": parent, contexts: ["selection"], "id": "gaiaAsk"});
-    const parentId = "customPrompt";
-    chrome.contextMenus.update(parentId,{
-        enabled: false,
-        visible: false,
-    });
-    const visibleArr = arr.filter((o) => o.visible && o.title)
-    if (visibleArr && visibleArr.length) {
-        let limit = 5;
-        chrome.contextMenus.update(parentId,{
-            enabled: true,
-            visible: true,
-        });
-        for (let i = 0; i < limit; i++) {
-            const idNum = i + 1;
-            chrome.contextMenus.update('Custom' + idNum,{
-                enabled: false,
-                visible: false,
-            });
-        }
-        limit = arr.length > 5 ? 5 : arr.length;
-        for (let i = 0; i < limit; i++) {
-            const item = arr[i]
-            const idNum = i + 1;
-            const id = 'Custom' + idNum;
-            if (item.title) {
-                chrome.contextMenus.update(id, {
-                    title: item.title + ': "%s"',
-                    enabled: true,
-                    visible: item.visible,
-                });
-            }
-            const objToSet = {}
-            objToSet[id] = {title: item.title, visible: item.visible};
-            chrome.storage.sync.set(objToSet)
-        }
-    }
-}
-
-chrome.contextMenus.onClicked.addListener(function(info, tab) {
-    const storageKey = "gaia-chatgpt-token"
-    let text = info.selectionText;
-    chrome.storage.local.get(storageKey, function (obj) {
-        // console.log('storageKey obj', obj)
-        if (obj && obj[storageKey]) {
-            // console.log('info', info)
-            if (info.menuItemId === 'gaiaSummarize') {
-                text = 'Summarize:\n ' + text;
-            } else if (info.menuItemId === 'gaiaAsk') {
-                text = 'Ask:\n ' + text;
-            } else if (info.menuItemId === 'gaiaExpend') {
-                text = 'Expend:\n ' + text;
-            } else {
-                const orig_text = text;
-                text = '';
-                chrome.storage.sync.get(info.menuItemId, function (obj) {
-                    if (obj && obj[info.menuItemId]) {
-                        text = obj[info.menuItemId] + ':\n' + orig_text;
-                        chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
-                    }
-                })
-            }
-            if (text) {
-                chrome.tabs.sendMessage(tab.id, {type: 'chat', text: text});
-            }
-        } else {
-            chrome.tabs.sendMessage(tab.id, {type: 'chat', noGptToken: true, text: text});
-        }
-    })
-})
-
 
 // chrome.identity.getAuthToken({ 'interactive': false }, token => {
 //     console.log('token', token)
@@ -379,3 +392,5 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 //         });
 //     }
 // })
+
+new GaiaExtension();

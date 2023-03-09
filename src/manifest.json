@@ -1,8 +1,8 @@
 {
-  "name": "Gaia",
-  "short_name": "Gaia",
-  "description": "Gaia Labs presenting privacy model for ChatGpt",
-  "version": "1.0.0",
+  "name": "GAIA",
+  "short_name": "GAIA",
+  "description": "GAIA’s plugin enables you to use Generative AI models everywhere!",
+  "version": "1.0.1",
   "manifest_version": 3,
   "action": {
     "default_title": "Gaia"
@@ -12,7 +12,8 @@
   ],
   "options_page": "index.html?#/options",
   "background": {
-    "service_worker": "extension/background/main.js"
+    "service_worker": "extension/background/main.js",
+    "type": "module"
   },
   "web_accessible_resources": [
     {

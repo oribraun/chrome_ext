@@ -1,8 +1,2 @@
-try {
-    importScripts(
-        "background.js",
-        "local_chat_gpt.js"
-    );
-} catch (e) {
-    console.log(e);
-}
+import "./background.js";
+import "./local_chat_gpt.js";

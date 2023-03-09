@@ -168,6 +168,16 @@ export class ApiService {
             this.httpOptions
         )
     }
+    getSettings(key: string) {
+        return this.http.post(this.serverBase + this.baseApi + 'get-settings', {key: key},
+            this.httpOptions
+        )
+    }
+    setSettings(key: string, data: any) {
+        return this.http.post(this.serverBase + this.baseApi + 'set-settings', {key: key, data: data},
+            this.httpOptions
+        )
+    }
     getGoogleToken(token: string) {
         return this.http.post(this.serverBase + this.baseApi + 'google/get-token', {'token': token},
             this.httpOptions

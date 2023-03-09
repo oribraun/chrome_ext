@@ -6,6 +6,7 @@ import {Config} from "../../config";
 import {MyRouter} from "../my.router";
 import {HttpEventType} from "@angular/common/http";
 import {Observable} from "rxjs";
+import {MessagesService} from "../../services/messages.service";
 
 declare var $: any;
 @Component({
@@ -26,7 +27,8 @@ export class MainComponent implements OnInit, OnDestroy {
         // {text: ''},
     ]
     chatLimit = 50;
-    sentQuestion = true;
+    sentQuestion = false;
+    gotFirstAnswer = false;
     endPoint: any
     host: any
     user: any;
@@ -52,6 +54,7 @@ export class MainComponent implements OnInit, OnDestroy {
     constructor(
         private apiService: ApiService,
         private chromeExtensionService: ChromeExtensionService,
+        private messagesService: MessagesService,
         private config: Config,
         private router:MyRouter,
         private ref:ChangeDetectorRef
@@ -70,7 +73,7 @@ export class MainComponent implements OnInit, OnDestroy {
             // this.promptOptimizer();
         })
         this.listenToChromeContentScriptMessages();
-        this.chromeExtensionService.ListenFor('page-change').subscribe((res: any) => {
+        this.messagesService.ListenFor('change-main-page').subscribe((res: any) => {
             let array = this.allowUserPages;
             if (this.config.is_company) {
                 array = array.concat(this.allowCompanyPages);
@@ -94,20 +97,22 @@ export class MainComponent implements OnInit, OnDestroy {
     setUpInitPage() {
         console.log('this.config.is_company', this.config.is_company)
         if (this.config.is_company) {
-            this.page = 'privacy-model';
+            this.changePage('privacy-model')
         } else {
-            this.page = 'prompt-uploader';
+            this.changePage('prompt-uploader')
         }
     }
 
     changePage(page: string) {
         this.page = page;
+        this.messagesService.Broadcast('change-header-page', {page: this.page})
     }
 
     listenToChromeContentScriptMessages() {
         this.privacyModelListener = this.chromeExtensionService.ListenFor("privacy-model").subscribe((obj) => {
             // console.log('this.router.url',this.router.url)
-            this.page = 'privacy-model';
+            // this.page = 'privacy-model';
+            this.changePage('privacy-model')
             const request = obj.request;
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
@@ -116,6 +121,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 sendResponse({success: false, message: 'unauthorized'});
                 this.apiService.collectUserPrompt(prompt).subscribe();
                 this.forcePrompt();
+                this.forceBindChanges();
                 return;
             }
             this.resetModelResults();
@@ -147,14 +153,17 @@ export class MainComponent implements OnInit, OnDestroy {
         this.getAnswerListener = this.chromeExtensionService.ListenFor("chat").subscribe((obj) => {
             // console.log('this.router.url',this.router.url)
             if (this.chatRequestInProgress) {
+                this.chromeExtensionService.showSidebar('ListenFor chat');
                 return;
             }
             this.chatRequestInProgress = true;
-            this.page = 'chat';
+            this.changePage('chat')
             const request = obj.request;
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
             const text = request.text;
+            const title = request.title;
+            this.chromeExtensionService.sendAnalytics('chat', title, {user_email: this.config.user?.email});
             if (request.noGptToken) {
                 this.chatGptNeedToRefreshToken = true;
                 this.chatRequestInProgress = false;
@@ -196,14 +205,23 @@ export class MainComponent implements OnInit, OnDestroy {
         })
     }
 
+    promptFromInput(text: string) {
+        if (this.chatRequestInProgress) {
+            return;
+        }
+        this.chatRequestInProgress = true;
+        this.chatProcessPrompt(text)
+    }
+
     chatProcessPrompt(text: string) {
         this.chat.push({text:text})
         this.chat.push({text:''})
         this.sentQuestion = true;
+        this.gotFirstAnswer = false;
         this.scrollToBottom();
-        this.forceBindChanges();
         this.apiService.collectUserPrompt(text).subscribe();
         this.chatPrompt = '';
+        this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
         this.sendMessageToChatGpt(text);
@@ -251,6 +269,7 @@ export class MainComponent implements OnInit, OnDestroy {
     testPrivacyModelApi() {
         this.apiService.privacyModel('test', this.endPoint).subscribe(async (res) => {
             this.resultsModelTest = true;
+            this.changePage('chat');
             this.forceBindChanges();
             console.log('res', res)
         }, (err) => {
@@ -450,27 +469,31 @@ export class MainComponent implements OnInit, OnDestroy {
             if (res.answer && res.answer.done) {
                 const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
                 this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
-                this.chatGptCurrentMessage = '';
+                this.resetItems();
                 return;
             }
             if (res.answer) {
-                if (res.answer.text === 'Unauthorized') {
-                    this.chatGptNeedToRefreshToken = true;
-                    this.chatGptCurrentMessage = '';
+                if (res.answer.toManyRequests) {
+                    console.log('ListenToChatGpt toManyRequests msg', res)
+                    this.changePage('chat');
+                    this.resetItems(res.answer.text);
+                    return
+                } else if (res.answer.messageLength) {
+                    console.log('ListenToChatGpt messageLength msg', res)
+                    this.changePage('chat');
+                    this.resetItems(res.answer.text);
+                    return
+                } else if (res.answer.text === 'Unauthorized') {
                     console.log('ListenToChatGpt Unauthorized msg', res)
-                } else {
-                    // console.log('ListenToChatGpt msg', res)
-                    // if (!this.chatGptConversationId && !this.chatGptRequestGetConvIdProgress) {
-                    //     console.log('trying to get conversation id', res)
-                    //     this.chatGptRequestGetConvIdProgress = true;
-                    //     this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGetConversation', {})
-                    // }
-                }
-                if (res.answer.text !== this.chatGptCurrentMessage) {
+                    this.changePage('chat');
+                    this.chatGptNeedToRefreshToken = true;
+                    this.resetItems(res.answer.text);
+                    return
+                } else if (res.answer.text !== this.chatGptCurrentMessage) {
                     const conversation_id = res.answer.data.conversation_id;
                     const message_id = res.answer.data.message.id;
-                    console.log('ListenToChatGpt conversation_id', conversation_id)
-                    console.log('ListenToChatGpt message_id', message_id)
+                    // console.log('ListenToChatGpt conversation_id', conversation_id)
+                    // console.log('ListenToChatGpt message_id', message_id)
                     if (conversation_id) {
                         this.chatGptConversationId = conversation_id;
                     }
@@ -478,14 +501,35 @@ export class MainComponent implements OnInit, OnDestroy {
                         this.chatGptLastMessageId = message_id;
                     }
                     this.chat[this.chat.length - 1].text = res.answer.text
+                    if (!this.gotFirstAnswer) {
+                        this.chatPrompt = '';
+                        this.gotFirstAnswer = true;
+                    }
                     this.sentQuestion = false
-                    this.chatPrompt = '';
                     // this.chatGptCurrentMessage = '';
                     this.scrollToBottom();
+                } else {
+                    console.log('ListenToChatGpt something went wrong res.answer', res)
+                    this.resetItems('something went wrong');
+                    return
                 }
+                this.forceBindChanges();
+            } else {
+                console.log('ListenToChatGpt something went wrong msg', res)
+                this.resetItems('something went wrong');
                 this.forceBindChanges();
             }
         })
+    }
+
+    resetItems(text: string = '') {
+        this.chatGptCurrentMessage = '';
+        this.chatRequestInProgress = false;
+        this.sentQuestion = false;
+        if (text) {
+            this.chat[this.chat.length - 1].text = text;
+        }
+        this.forceBindChanges();
     }
 
     ngOnDestroy(): void {
