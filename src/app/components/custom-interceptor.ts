@@ -37,12 +37,16 @@ export class CustomInterceptor implements HttpInterceptor {
                             console.log('Forbidden');
                             this.clearAndRedirectToLogin();
                         }
+                        if (error && error.error && error.error.detail === "CSRF Failed: CSRF cookie not set.") {
+                            console.log('Forbidden');
+                            this.clearAndRedirectToLogin();
+                        }
                     }
                     if (error.status === 401) {
                         console.log('Unauthorized');
                         this.clearAndRedirectToLogin();
                     }
-                    console.log(errorMsg);
+                    console.log('errorMsg',errorMsg);
                     return throwError(errorMsg);
                 })
             )

@@ -1,18 +1,18 @@
 <div *ngIf="page === 'privacy-model'">
     <div class="model container">
-                <div class="headline-no-prompt">
-                    <h2 class="text-center">Endpoint</h2>
-                    <!--        <button (click)="testPrivacyModelApi()">test</button>-->
-                </div>
-                <div class="input-group mb-1">
-                <span class="input-group-text">
-                    <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>
-                    <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>
-                    <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>
-                </span>
-                    <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">
-                    <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>
-                </div>
+<!--        <div class="headline-no-prompt">-->
+<!--            <h2 class="text-center">Endpoint</h2>-->
+<!--            &lt;!&ndash;        <button (click)="testPrivacyModelApi()">test</button>&ndash;&gt;-->
+<!--        </div>-->
+<!--        <div class="input-group mb-1">-->
+<!--        <span class="input-group-text">-->
+<!--            <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>-->
+<!--            <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>-->
+<!--            <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>-->
+<!--        </span>-->
+<!--            <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">-->
+<!--            <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>-->
+<!--        </div>-->
         <div class="headline-no-prompt" *ngIf="!modelResults">
             <!--            <h2 class="text-center">Start Using {{host}}</h2>-->
             <div class="info">

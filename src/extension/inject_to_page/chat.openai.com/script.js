@@ -127,9 +127,13 @@ async function onInitAngular(debug=false) {
             // console.log('onDivChange e', e)
             textarea_clone_list = document.getElementsByClassName('textarea_clone');
             if (textarea_clone_list && textarea_clone_list.length) {
-                console.log('no need to inject')
+                if (debug) {
+                    console.log('no need to inject')
+                }
             } else {
-                console.log('need to inject')
+                if (debug) {
+                    console.log('need to inject')
+                }
                 onRemoveInitAngular(true)
                 onInitAngular(true)
 
@@ -211,7 +215,9 @@ async function onRemoveInitAngular(debug=false) {
         }
         var target = document.querySelector('#__next');
 
-        console.log('removing injected script')
+        if (debug) {
+            console.log('removing injected script')
+        }
         var lastTextAreaKeydown = window.extentionLastEventListeners['textarea-keydown'];
         var lastButtonClick = window.extentionLastEventListeners['button-click'];
         var lastChromeMessageTwo = window.extentionLastEventListeners['chrome-message-two'];

@@ -269,12 +269,11 @@ export class MainComponent implements OnInit, OnDestroy {
     testPrivacyModelApi() {
         this.apiService.privacyModel('test', this.endPoint).subscribe(async (res) => {
             this.resultsModelTest = true;
-            this.changePage('chat');
-            this.forceBindChanges();
+            // this.forceBindChanges();
             console.log('res', res)
         }, (err) => {
             this.resultsModelTest = false;
-            this.forceBindChanges();
+            // this.forceBindChanges();
             if (err) {
                 if (err.status === 403) {
                     // Forbidden - not exist

@@ -1,7 +1,9 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {Config} from "./config";
 import {ApiService} from "./services/api.service";
 import {ChromeExtensionService} from "./services/chrome-extension.service";
+import {NavigationEnd, NavigationError, NavigationStart, Router} from "@angular/router";
+import {MessagesService} from "./services/messages.service";
 
 @Component({
     selector: 'app-root',
@@ -10,13 +12,24 @@ import {ChromeExtensionService} from "./services/chrome-extension.service";
 })
 export class AppComponent implements OnInit, OnDestroy {
     user: any;
+
+    routeSubscription: any;
     constructor(
         private config: Config,
         private apiService: ApiService,
-        private chromeExtensionService: ChromeExtensionService
+        private chromeExtensionService: ChromeExtensionService,
+        private messagesService: MessagesService,
+        private ref: ChangeDetectorRef,
+        private router: Router
     ) {
         this.chromeExtensionService.listenToContentScriptMessages()
         this.setupCredsFromStorage();
+        this.listenToMyNavigate();
+
+        this.config.user_subject.subscribe((user) => {
+            this.user = this.config.user;
+            this.config.is_company = this.user.company_name
+        })
     }
 
     ngOnInit(): void {
@@ -50,10 +63,6 @@ export class AppComponent implements OnInit, OnDestroy {
         if (csrftoken) {
             this.config.csrf_token = csrftoken;
         }
-        this.config.user_subject.subscribe((user) => {
-            this.user = this.config.user;
-            this.config.is_company = this.user.company_name
-        })
     }
 
     async setupCredsFromCookies() {
@@ -108,8 +117,27 @@ export class AppComponent implements OnInit, OnDestroy {
         })
     }
 
+    listenToNavigate() {
+        this.routeSubscription = this.router.events.subscribe(event => {
+            if (event instanceof NavigationStart) {
+                console.log('NavigationStart event', event)
+            } else if (event instanceof NavigationEnd) {
+                console.log('NavigationEnd event', event)
+            }
+        });
+    }
+    listenToMyNavigate() {
+        this.routeSubscription = this.messagesService.ListenFor('navigate').subscribe(event => {
+            if (chrome.runtime) {
+                // console.log('navigate this.ref.detectChanges();')
+                this.ref.detectChanges();
+            }
+        });
+    }
+
     ngOnDestroy(): void {
         this.chromeExtensionService.removeListenToContentScriptMessages();
+        this.routeSubscription.unsubscribe();
     }
 
 

@@ -3,6 +3,7 @@ import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTre
 import { Observable } from 'rxjs';
 import {Config} from "../config";
 import {MyRouter} from "../components/my.router";
+import {MessagesService} from "../services/messages.service";
 
 @Injectable({
     providedIn: 'root'
