@@ -36,7 +36,7 @@
         box-sizing: border-box;
         img {
             position: relative;
-            max-width: 500px;
+            max-width: 300px;
             width: 100%;
         }
     }
@@ -71,6 +71,9 @@
             .menu-item-pull-right {
                 position: relative;
             }
+            .menu-item-pull-left {
+                margin-right: auto;
+            }
         }
         .menu-list-top {
             .menu-item {
@@ -80,13 +83,15 @@
             }
         }
         .menu-list-bottom {
-            margin: 0 20px;
+            margin: 0 10px;
         }
     }
     .absolute-menu {
         position: absolute;
         right: 0;
+        left: 0;
         z-index: 1;
+        margin: 0;
         .menu-list {
             justify-content: end;
             .menu-item {

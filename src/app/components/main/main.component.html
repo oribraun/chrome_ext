@@ -1,88 +1,71 @@
-<div *ngIf="page === 'privacy-model'">
-    <div class="model container">
-<!--        <div class="headline-no-prompt">-->
-<!--            <h2 class="text-center">Endpoint</h2>-->
-<!--            &lt;!&ndash;        <button (click)="testPrivacyModelApi()">test</button>&ndash;&gt;-->
-<!--        </div>-->
-<!--        <div class="input-group mb-1">-->
-<!--        <span class="input-group-text">-->
-<!--            <span *ngIf="resultsModelTest === undefined"><i class="bi bi-question"></i></span>-->
-<!--            <span class="test-pass" *ngIf="resultsModelTest === true"><i class="bi bi-hand-thumbs-up"></i></span>-->
-<!--            <span class="test-failed" *ngIf="resultsModelTest === false"><i class="bi bi-hand-thumbs-down"></i></span>-->
-<!--        </span>-->
-<!--            <input type="text" class="form-control" placeholder="EndPoint" [(ngModel)]="endPoint">-->
-<!--            <button class="btn btn-outline-secondary" type="button" (click)="testPrivacyModelApi()">Test</button>-->
-<!--        </div>-->
-        <div class="headline-no-prompt" *ngIf="!modelResults">
-            <!--            <h2 class="text-center">Start Using {{host}}</h2>-->
-            <div class="info">
-                <div class="text">Start using chatGpt</div>
+<div class="model container" *ngIf="page === 'privacy-model'" [ngClass]="{'model-empty': !modelResults}">
+   <div class="headline-no-prompt" *ngIf="!modelResults">
+<!--            <h2 class="text-center">Start Using {{host}}</h2>-->
+        <div class="info">
+            <div class="text">Start using chatGpt</div>
+        </div>
+    </div>
+    <div class="headline-with-prompt" *ngIf="modelResults">
+        <!--            <h2 class="text-center">Privacy Model Results</h2>-->
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Suggested Prompt</span> <i id="suggested_prompt_clipboard" class="bi bi-clipboard" (click)="copyPrompt()"></i>
+            </div>
+            <div>
+                {{modelResults.suggested_prompt}}
             </div>
         </div>
-        <div class="headline-with-prompt" *ngIf="modelResults">
-            <!--            <h2 class="text-center">Privacy Model Results</h2>-->
-            <div class="text-center box">
-                <div class="bold header">
-                    <span class="text">Suggested Prompt</span> <i id="suggested_prompt_clipboard" class="bi bi-clipboard" (click)="copyPrompt()"></i>
-                </div>
-                <div>
-                    {{modelResults.suggested_prompt}}
-                </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Model Used</span>
             </div>
-            <div class="text-center box">
-                <div class="bold header">
-                    <span class="text">Model Used</span>
-                </div>
-                <div>
-                    {{modelResults.suggested_model}}
-                </div>
+            <div>
+                {{modelResults.suggested_model}}
             </div>
-            <div class="text-center box">
-                <div class="bold header">
-                    <span class="text">Model Results</span>
-                </div>
-                <div>
-                    {{modelResults.model_res | json}}
-                </div>
+        </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Model Results</span>
             </div>
-            <div class="text-center box">
-                <div class="bold header">
-                    <span class="text">Privacy Pass</span>
-                </div>
-                <div>
-                    <div class="pass_privacy_failed" *ngIf="!modelResults.pass_privacy">prompt did not pass privacy policy</div>
-                    <div class="pass_privacy_success" *ngIf="modelResults.pass_privacy">prompt pass privacy policy</div>
-                </div>
+            <div>
+                {{modelResults.model_res | json}}
             </div>
-            <div class="text-center box">
-                <div class="buttons" *ngIf="!modelResults.pass_privacy">
-                    <button id="force_button" (click)="forcePrompt()">Continue Anyway</button>
-                </div>
+        </div>
+        <div class="text-center box">
+            <div class="bold header">
+                <span class="text">Privacy Pass</span>
+            </div>
+            <div>
+                <div class="pass_privacy_failed" *ngIf="!modelResults.pass_privacy">prompt did not pass privacy policy</div>
+                <div class="pass_privacy_success" *ngIf="modelResults.pass_privacy">prompt pass privacy policy</div>
+            </div>
+        </div>
+        <div class="text-center box">
+            <div class="buttons" *ngIf="!modelResults.pass_privacy">
+                <button id="force_button" (click)="forcePrompt()">Continue Anyway</button>
             </div>
         </div>
     </div>
 </div>
-<div *ngIf="page === 'prompt-uploader'">
-    <div class="prompt-uploader container">
-        <!--        <div class="headline-no-prompt">-->
-        <!--            <h2 class="text-center">Upload txt file to inject</h2>-->
-        <!--        </div>-->
-        <div class="info">
-            <div class="text">Upload txt file to inject to chatGpt</div>
-        </div>
-        <div class="mb-3">
-            <input class="form-control" id="formFileSm" type="file" (change)="fileChanged($event)">
-        </div>
-        <div class="error text-danger text-center" *ngIf="fileUploadErr">
-            {{fileUploadErr}}
-        </div>
-        <div class="file-text" *ngIf="fileText">
-            <h6 class="text-center">{{fileText.substring(0, 50) + '...'}}</h6>
-        </div>
-        <div class="text-center box">
-            <div class="buttons" *ngIf="fileText">
-                <button id="continue_button" (click)="copyTextToPrompt()">Copy To Prompt</button>
-            </div>
+<div class="prompt-uploader container" *ngIf="page === 'prompt-uploader'">
+    <!--        <div class="headline-no-prompt">-->
+    <!--            <h2 class="text-center">Upload txt file to inject</h2>-->
+    <!--        </div>-->
+    <div class="info">
+        <div class="text">Upload txt file to inject to chatGpt</div>
+    </div>
+    <div class="mb-3">
+        <input class="form-control" id="formFileSm" type="file" (change)="fileChanged($event)">
+    </div>
+    <div class="error text-danger text-center" *ngIf="fileUploadErr">
+        {{fileUploadErr}}
+    </div>
+    <div class="file-text" *ngIf="fileText">
+        <h6 class="text-center">{{fileText.substring(0, 50) + '...'}}</h6>
+    </div>
+    <div class="text-center box">
+        <div class="buttons" *ngIf="fileText">
+            <button id="continue_button" (click)="copyTextToPrompt()">Copy To Prompt</button>
         </div>
     </div>
 </div>

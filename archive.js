@@ -1,6 +1,6 @@
 const archiver = require('archiver');
 const fs = require('fs');
-const packageJson = require('./package.json');
+const packageJson = require('./src/manifest.json');
 
 // Get the package version
 const packageVersion = packageJson.version;

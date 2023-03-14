@@ -304,7 +304,7 @@ function getTokenFromChatGpt() {
 }
 
 function tryToGetToken() {
-    console.log('getTokenFromChatGpt interval')
+    // console.log('getTokenFromChatGpt interval')
     var e = document.querySelector('script[id="__NEXT_DATA__"]');
     if (e && e.textContent) {
         var textContent = e.textContent;

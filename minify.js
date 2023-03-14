@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const UglifyJS = require('uglify-js');
 
-const inputDir = './dist/extension/';  // directory containing JavaScript files to minify
-const outputDir = './dist/extension/';  // directory to write minified files to
+const innerFolder = ''
+const inputDir = './dist/extension/' + innerFolder;  // directory containing JavaScript files to minify
+const outputDir = './dist/extension/' + innerFolder;  // directory to write minified files to
 
 // Recursively get a list of all JavaScript files in the input directory
 function getJsFiles(dir, fileList) {

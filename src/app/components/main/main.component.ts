@@ -63,7 +63,7 @@ export class MainComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         console.log('init main component')
         this.setUpInitPage();
-        this.endPoint = this.apiService.serverBase + this.apiService.baseApi + 'privacy-model';
+        this.endPoint = this.apiService.serverBase + this.apiService.baseApiUser + 'privacy-model';
         // console.log('init privacy model')
         this.config.server_host_subject.subscribe(() => {
             this.host = this.config.hostToName();
@@ -172,6 +172,21 @@ export class MainComponent implements OnInit, OnDestroy {
                 return;
             }
             this.chatGptNeedToRefreshToken = false;
+            if (title === 'gaiaAllSummarize') {
+                this.chromeExtensionService.sendMessageToContentScript('get-html', {content: 'text'}).then((res: any) => {
+                    this.chatRequestInProgress = false;
+                    let fullText = text + res.html;
+                    const maxLength = 14500;
+                    if (fullText.length > maxLength) {
+                        fullText = fullText.substring(0, maxLength)
+                    }
+                    console.log('html resp', fullText.length)
+                    this.chatProcessPrompt(fullText)
+                });
+                this.forceBindChanges();
+                return;
+
+            }
             // if (!this.config.is_company) {
             //     sendResponse({success: false, message: 'Unauthorized'});
             //     return;
@@ -218,13 +233,15 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chat.push({text:''})
         this.sentQuestion = true;
         this.gotFirstAnswer = false;
-        this.scrollToBottom();
-        this.apiService.collectUserPrompt(text).subscribe();
+        this.apiService.collectUserPrompt(text).subscribe((res) => {}, (err) => {});
         this.chatPrompt = '';
         this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
         this.sendMessageToChatGpt(text);
+        setTimeout(() => {
+            this.scrollToBottom();
+        })
         return;
 
         const respo:Observable<any> = this.apiService.getAnswerStreaming(text);

@@ -5,6 +5,7 @@ import {Config} from "../config";
 import {ChromeExtensionService} from "../services/chrome-extension.service";
 import {Router} from "@angular/router";
 import {MyRouter} from "./my.router";
+import {ApiService} from "../services/api.service";
 
 @Injectable()
 export class CustomInterceptor implements HttpInterceptor {
@@ -12,6 +13,7 @@ export class CustomInterceptor implements HttpInterceptor {
     constructor(
         private config: Config,
         private chromeExtensionService: ChromeExtensionService,
+        private apiService: ApiService,
         private router: MyRouter
     ) {
     }
@@ -39,7 +41,13 @@ export class CustomInterceptor implements HttpInterceptor {
                         }
                         if (error && error.error && error.error.detail === "CSRF Failed: CSRF cookie not set.") {
                             console.log('Forbidden');
-                            this.clearAndRedirectToLogin();
+                            if (request.url.indexOf('auth/logout') === -1) {
+                                this.apiService.logout().subscribe(() => {
+                                    this.clearAndRedirectToLogin();
+                                }, (err) => {
+                                    this.clearAndRedirectToLogin();
+                                })
+                            }
                         }
                     }
                     if (error.status === 401) {
@@ -54,6 +62,7 @@ export class CustomInterceptor implements HttpInterceptor {
 
     clearAndRedirectToLogin() {
         this.config.resetCookies();
+        this.config.resetStorage();
         this.config.resetUserCreds();
         if (chrome.tabs) {
             this.chromeExtensionService.sendMessageToContentScript('login-required', {})

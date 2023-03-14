@@ -19,6 +19,7 @@
     "build-ext": "ng build --configuration=extension",
     "build-ext-zip": "ng build --configuration=extension & node minify.js & npm run zip-build",
     "zip-build": "node archive.js",
+    "minify": "node minify.js",
     "test": "ng test",
     "serve": "ng serve --port 4201",
     "lint": "ng lint",

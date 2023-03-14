@@ -2,7 +2,7 @@
   "name": "GAIA",
   "short_name": "GAIA",
   "description": "GAIA’s plugin enables you to use Generative AI models everywhere!",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "manifest_version": 3,
   "action": {
     "default_title": "Gaia"
@@ -22,7 +22,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "frame-src https://*.firebaseapp.com https://*.google.com 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'"
+    "extension_pages": "frame-src https://*.firebaseapp.com https://*.google.com 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'"
   },
   "permissions": [
     "storage",

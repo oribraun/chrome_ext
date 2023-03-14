@@ -1,4 +1,4 @@
-<div class="header container">
+<div class="header">
     <!--    <nav class="navbar">-->
     <!--        <div class="container-fluid">-->
     <!--            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">-->
@@ -59,8 +59,16 @@
     <!--    </nav>-->
     <div class="menu absolute-menu">
         <ul class="menu-list menu-list-top">
+            <li class="menu-item menu-item-pull-left">
+                <a class="menu-link" href="#" (click)="toggleSidebar($event)">
+                    <i class="bi bi-arrows-fullscreen pointer" title="Expend"></i>
+                </a>
+                <!--                <a class="menu-link" href="#">-->
+                <!--                    <i class="bi bi-gear pointer" title="Settings" (click)="settings($event)"></i>-->
+                <!--                </a>-->
+            </li>
             <li class="menu-item menu-item-pull-right">
-                <a class="menu-link" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal" (click)="getPromptSettingsApi()">
+                <a class="menu-link" href="#" (click)="openModel($event)">
                     <i class="bi bi-gear pointer" title="Settings"></i>
                 </a>
                 <!--                <a class="menu-link" href="#">-->
@@ -75,7 +83,7 @@
         </ul>
     </div>
     <div class="logo">
-        <img src="/assets/images/Gaia_blue_short_transparent.png" alt="">
+        <img src="/assets/images/Generative_Ai_Logo.png" alt="">
     </div>
     <div class="menu">
         <ul class="menu-list menu-list-bottom">

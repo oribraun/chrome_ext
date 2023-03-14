@@ -91,6 +91,9 @@ class GaiaExtension {
                     } else if (info.menuItemId === 'gaiaExpend') {
                         item_title = 'Expend:';
                         text = item_title + '\n ' + text;
+                    } else if (info.menuItemId === 'gaiaAllSummarize') {
+                        item_title = 'gaiaAllSummarize';
+                        text = 'Summarize:' + '\n ';
                     } else {
                         const orig_text = text;
                         text = '';
@@ -118,11 +121,15 @@ class GaiaExtension {
             files: [
                 'extension/scripts/side_menu.js'
             ]
-        }).then(() => console.log("script injected in one frame"));
+        }).then(() => {
+            // console.log("script injected in one frame")
+        });
         chrome.scripting.insertCSS({
             target: { tabId: tab_id, allFrames: false},
             files: ["extension/scripts/side_menu.css"]
-        }).then(() => console.log("css injected in one frame"));
+        }).then(() => {
+            // console.log("css injected in one frame")
+        });
     }
 
     injectContentHostScript(tab_id, host) {
@@ -171,27 +178,29 @@ class GaiaExtension {
         //     {"title": "Ask:", "parentId": parent, contexts: ["selection"], "id": "gaiaAsk"});
         chrome.contextMenus.create({
             title: 'Gaia',
-            // "title": 'Gaia To Chat "%s"',
-            contexts: ["selection"],
+            contexts: ["all"],
             id: "gaiaMain"
         });
         chrome.contextMenus.create({
+            title: 'Full Page Summarize',
+            contexts: ["page"],
+            parentId: "gaiaMain",
+            id: "gaiaAllSummarize"
+        });
+        chrome.contextMenus.create({
             title: 'Summarize: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             parentId: "gaiaMain",
             id: "gaiaSummarize"
         });
         chrome.contextMenus.create({
             title: 'Ask: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             parentId: "gaiaMain",
             id: "gaiaAsk"
         });
         chrome.contextMenus.create({
             title: 'Expend: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             parentId: "gaiaMain",
             id: "gaiaExpend"
@@ -207,7 +216,6 @@ class GaiaExtension {
         });
         chrome.contextMenus.create({
             title: 'Custom1: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             enabled: false,
             visible: false,
@@ -216,7 +224,6 @@ class GaiaExtension {
         });
         chrome.contextMenus.create({
             title: 'Custom2: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             enabled: false,
             visible: false,
@@ -225,7 +232,6 @@ class GaiaExtension {
         });
         chrome.contextMenus.create({
             title: 'Custom3: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             enabled: false,
             visible: false,
@@ -234,7 +240,6 @@ class GaiaExtension {
         });
         chrome.contextMenus.create({
             title: 'Custom4: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             enabled: false,
             visible: false,
@@ -243,7 +248,6 @@ class GaiaExtension {
         });
         chrome.contextMenus.create({
             title: 'Custom5: "%s"',
-            // "title": 'Gaia To Chat "%s"',
             contexts: ["selection"],
             enabled: false,
             visible: false,
@@ -300,9 +304,9 @@ class GaiaExtension {
                         visible: item.visible,
                     });
                 }
-                // const objToSet = {}
-                // objToSet[id] = {title: item.title, visible: item.visible};
-                // chrome.storage.sync.set(objToSet)
+                const objToSet = {}
+                objToSet[id] = {title: item.title, visible: item.visible};
+                chrome.storage.sync.set(objToSet)
             }
         }
     }

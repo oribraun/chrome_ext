@@ -15,6 +15,8 @@ export class ApiService {
     serverBase = environment.serverUrl;
     baseApi = 'api/';
     baseApiAuth = 'api/auth/';
+    baseApiUser = 'api/us/';
+    baseApiCompany = 'api/co/';
     headers: any = {}
     private httpOptionsWithCreds = {
         headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
@@ -121,26 +123,26 @@ export class ApiService {
     }
 
     promptOptimizer(prompt: string) {
-        return this.http.post(this.serverBase + this.baseApi + 'prompt_optimizer', {
+        return this.http.post(this.serverBase + this.baseApiUser + 'prompt_optimizer', {
                 prompt: prompt
             },
             this.httpOptions
         )
     }
     upload(formData: FormData) {
-        return this.http.post(this.serverBase + this.baseApi + 'upload', formData,
+        return this.http.post(this.serverBase + this.baseApiUser + 'upload', formData,
             this.httpOptions
         )
     }
 
     analyze(filePath: string) {
-        return this.http.post(this.serverBase + this.baseApi + 'analyze', {'file_path': filePath},
+        return this.http.post(this.serverBase + this.baseApiUser + 'analyze', {'file_path': filePath},
             this.httpOptions
         )
     }
 
     privacyModel(prompt: string, endPoint=null) {
-        let url = this.serverBase + this.baseApi + 'privacy-model';
+        let url = this.serverBase + this.baseApiUser + 'privacy-model';
         if (endPoint) {
             url = endPoint;
         }
@@ -150,13 +152,13 @@ export class ApiService {
     }
 
     collectUserPrompt(prompt: string) {
-        return this.http.post(this.serverBase + this.baseApi + 'collect-user-prompt', {'prompt': prompt},
+        return this.http.post(this.serverBase + this.baseApiUser + 'collect-user-prompt', {'prompt': prompt},
             this.httpOptions
         )
     }
 
     getAnswer(prompt: string) {
-        return this.http.post(this.serverBase + this.baseApi + 'get-answer', {'prompt': prompt},
+        return this.http.post(this.serverBase + this.baseApiUser + 'get-answer', {'prompt': prompt},
             this.httpOptions
         )
     }
@@ -164,20 +166,32 @@ export class ApiService {
         this.httpOptions['responseType'] = 'text';
         this.httpOptions['observe'] = 'events';
         this.httpOptions['reportProgress'] = true;
-        return this.http.post(this.serverBase + this.baseApi + 'get-answer', {'prompt': prompt},
+        return this.http.post(this.serverBase + this.baseApiUser + 'get-answer', {'prompt': prompt},
             this.httpOptions
         )
     }
     getSettings(key: string) {
-        return this.http.post(this.serverBase + this.baseApi + 'get-settings', {key: key},
+        return this.http.post(this.serverBase + this.baseApiUser + 'get-settings', {key: key},
             this.httpOptions
         )
     }
     setSettings(key: string, data: any) {
-        return this.http.post(this.serverBase + this.baseApi + 'set-settings', {key: key, data: data},
+        return this.http.post(this.serverBase + this.baseApiUser + 'set-settings', {key: key, data: data},
             this.httpOptions
         )
     }
+    getDashboard(obj: any = {}) {
+        return this.http.post(this.serverBase + this.baseApiUser + 'get-dashboard', obj,
+            this.httpOptions
+        )
+    }
+    getUserPrompts(obj: any) {
+        return this.http.post(this.serverBase + this.baseApiUser + 'get-user-prompts', obj,
+            this.httpOptions
+        )
+    }
+
+
     getGoogleToken(token: string) {
         return this.http.post(this.serverBase + this.baseApi + 'google/get-token', {'token': token},
             this.httpOptions

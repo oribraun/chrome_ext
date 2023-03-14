@@ -18,9 +18,7 @@
     align-items: center;
     flex-direction: row-reverse;
     top: 0;
-    right: -375px;
     height: 100%;
-    width: 375px;
     visibility: visible;
     background-color: transparent;
     z-index: 99999999999999;
@@ -28,8 +26,16 @@
     transition: .3s all ease-in-out;
     /*animation: domain-tabs-appear 0.2s 1 linear;*/
 }
+.domain-tabs-sidebar-small {
+    right: -375px;
+    width: 375px;
+}
+.domain-tabs-sidebar-full {
+    right: -97%;
+    width: 97%;
+}
 .domain-tabs-sidebar-show {
-    right: 0 !important;
+    right: 0;
 }
 #domain-tabs-sidebar iframe {
     position: static !important;

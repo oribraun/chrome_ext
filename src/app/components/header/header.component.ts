@@ -1,16 +1,19 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from "../../services/api.service";
 import {Config} from "../../config";
 import {IsActiveMatchOptions, Router} from "@angular/router";
 import {MyRouter} from "../my.router";
 import {MessagesService} from "../../services/messages.service";
+import {ChromeExtensionService} from "../../services/chrome-extension.service";
+
+declare var $: any;
 
 @Component({
     selector: 'app-header',
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.less']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
     user: any;
     isCompany = false;
     currentPage = 'privacy-model'
@@ -26,9 +29,14 @@ export class HeaderComponent implements OnInit {
     promptSettingsKey = 'right-click-prompt-settings';
     promptSettingLimit = 5;
     promptSettingsError = '';
+
+    subscriptions: any = []
+
+    expended = false;
     constructor(
         private apiService: ApiService,
         private messagesService: MessagesService,
+        private chromeExtensionService: ChromeExtensionService,
         private config: Config,
         private router:MyRouter,
         private ref:ChangeDetectorRef
@@ -36,10 +44,12 @@ export class HeaderComponent implements OnInit {
 
     ngOnInit(): void {
         this.user = this.config.user;
-        this.config.user_subject.subscribe((user) => {
-            this.user = user;
-            this.config.is_company = this.user.company_name;
-        })
+        this.subscriptions.push(
+            this.config.user_subject.subscribe((user) => {
+                this.user = user;
+                this.config.is_company = this.user.company_name;
+            })
+        )
         // this.isCompany = this.user.company_name;
         // this.config.is_company_subject.subscribe((isCompany) => {
         //     this.isCompany = isCompany;
@@ -48,10 +58,17 @@ export class HeaderComponent implements OnInit {
         if (this.promptSettings.length) {
             this.savePrompt();
         }
-        this.messagesService.ListenFor('change-header-page').subscribe((obj) => {
-            this.currentPage = obj.page;
-            // this.forceBindChanges();
-        });
+        this.subscriptions.push(
+            this.messagesService.ListenFor('change-header-page').subscribe((obj) => {
+                this.currentPage = obj.page;
+                this.forceBindChanges();
+            })
+        )
+        this.subscriptions.push(
+            this.chromeExtensionService.ListenFor("hide-sidebar-on-window-click").subscribe(() => {
+                this.hideSettingsModel();
+            })
+        )
         return;
     }
 
@@ -71,10 +88,25 @@ export class HeaderComponent implements OnInit {
             }
         }
     }
+    toggleSidebar(e: Event) {
+        e.preventDefault();
+        if (this.expended) {
+            this.expended = false;
+            this.chromeExtensionService.minimize();
+        } else {
+            this.expended = true;
+            this.chromeExtensionService.expend();
+        }
+    }
+    openModel(e: Event) {
+        e.preventDefault();
+        this.getPromptSettingsApi(true);
+    }
 
-    async getPromptSettingsApi() {
+    async getPromptSettingsApi(openModel = false) {
         this.apiService.getSettings(this.promptSettingsKey).subscribe((res: any) => {
             if (!res.err) {
+                this.promptSettings = [];
                 for (let i =0; i < this.promptSettingLimit; i++) {
                     const idNum = i + 1;
                     const id = 'Custom' + idNum;
@@ -87,13 +119,16 @@ export class HeaderComponent implements OnInit {
                         this.addPrompt('', false);
                     }
                 }
+                this.setExtensionPrompts();
+                if (openModel) {
+                    this.showSettingsModel();
+                }
             } else {
                 console.log('error get settings')
             }
         }, (err) => {
             console.log('getSettings err', err)
         })
-        this.setExtensionPrompts();
     }
 
     addPrompt(text: string = '', visible = true) {
@@ -191,5 +226,20 @@ export class HeaderComponent implements OnInit {
             this.ref.detectChanges();
         }
     }
+
+    showSettingsModel() {
+        $('#settingsModal').modal('show')
+    }
+    hideSettingsModel() {
+        $('#settingsModal').modal('hide')
+    }
+
+    ngOnDestroy(): void {
+        for (let item of this.subscriptions) {
+            item.unsubscribe()
+        }
+    }
+
+
 
 }

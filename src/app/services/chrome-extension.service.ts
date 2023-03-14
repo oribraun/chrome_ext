@@ -271,6 +271,17 @@ export class ChromeExtensionService {
         }
     }
 
+    expend() {
+        if (chrome.tabs) {
+            this.sendMessageToContentScript('expend', {})
+        }
+    }
+    minimize() {
+        if (chrome.tabs) {
+            this.sendMessageToContentScript('minimize', {})
+        }
+    }
+
     getCompanyApiKey() {
         return new Promise((resolve, reject) => {
             if (chrome.storage) {

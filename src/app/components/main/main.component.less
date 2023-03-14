@@ -1,4 +1,26 @@
+.model-empty {
+    height: calc(100% - 173px);
+    .headline-no-prompt {
+        height: 100%;
+    }
+}
+
 .model {
+    .info {
+        position: relative;
+        padding: 5px;
+        text-align: center;
+        min-height: 300px;
+        height: 100%;
+        //box-shadow: 0 0 5px #ccc;
+        //height: calc(100% - 173px);
+        display: table;
+        width: 100%;
+        .text {
+            display: table-cell;
+            vertical-align: middle;
+        }
+    }
     .box {
         margin-top: 15px;
         .header {
@@ -56,21 +78,23 @@
         color: red;
     }
 }
-
-.info {
-    position: relative;
-    padding: 5px;
-    text-align: center;
-    //box-shadow: 0 0 5px #ccc;
-    min-height: 300px;
-    display: table;
-    width: 100%;
-    .text {
-        display: table-cell;
-        vertical-align: middle;
-    }
-}
 .prompt-uploader {
+    height: calc(100% - 173px);
+    .info {
+        position: relative;
+        padding: 5px;
+        text-align: center;
+        min-height: 300px;
+        height: calc(100% - 42px);
+        //box-shadow: 0 0 5px #ccc;
+        //height: calc(100% - 173px);
+        display: table;
+        width: 100%;
+        .text {
+            display: table-cell;
+            vertical-align: middle;
+        }
+    }
     .buttons {
         #continue_button {
             box-shadow: 0 0 5px #c0c0c0;
@@ -88,7 +112,7 @@
 .chat {
     position: relative;
     //padding-bottom: 5px;
-    height: calc(100% - 142px);
+    height: calc(100% - 173px);
     padding-bottom: 46px;
     overflow-y: hidden;
     overflow-x: hidden;

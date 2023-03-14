@@ -16,13 +16,13 @@ class ChatGPTClient {
 
     init = async () => {
         this.getAccessTokenFromApi().then(() => {
-            console.log('getAccessTokenFromApi success', this.accessToken)
+            // console.log('getAccessTokenFromApi success', this.accessToken)
         }).catch(() => {
-            console.log('getAccessTokenFromApi rejected')
+            // console.log('getAccessTokenFromApi rejected')
             this.getTokenFromStorage().then(() => {
-                console.log('getTokenFromStorage success', this.accessToken)
+                // console.log('getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                console.log('getTokenFromStorage rejected')
+                // console.log('getTokenFromStorage rejected')
                 this.tryToGetFromWindow()
             });
         })
@@ -66,13 +66,13 @@ class ChatGPTClient {
     removeWindow(window_id) {
         setTimeout(() => {
             this.getTokenFromStorage().then(() => {
-                console.log('removeWindow getTokenFromStorage success', this.accessToken)
+                // console.log('removeWindow getTokenFromStorage success', this.accessToken)
             }).catch(() => {
-                console.log('removeWindow getTokenFromStorage rejected')
+                // console.log('removeWindow getTokenFromStorage rejected')
                 this.getAccessTokenFromApi().then(() => {
-                    console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
+                    // console.log('removeWindow getAccessTokenFromApi success', this.accessToken)
                 }).catch(() => {
-                    console.log('removeWindow getAccessTokenFromApi rejected')
+                    // console.log('removeWindow getAccessTokenFromApi rejected')
                 })
             });
             // console.log('this.accessToken', this.accessToken)
