@@ -176,11 +176,11 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.chromeExtensionService.sendMessageToContentScript('get-html', {content: 'text'}).then((res: any) => {
                     this.chatRequestInProgress = false;
                     let fullText = text + res.html;
-                    const maxLength = 14500;
+                    const maxLength = 14300;
                     if (fullText.length > maxLength) {
                         fullText = fullText.substring(0, maxLength)
                     }
-                    console.log('html resp', fullText.length)
+                    // console.log('html resp', fullText.length)
                     this.chatProcessPrompt(fullText)
                 });
                 this.forceBindChanges();
