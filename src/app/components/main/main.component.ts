@@ -24,6 +24,7 @@ export class MainComponent implements OnInit, OnDestroy {
     modelResults: any
     chat: any = [
         // {text: 'hi there'},
+        // {text: 'hi there2'},
         // {text: ''},
     ]
     chatLimit = 50;
@@ -50,6 +51,9 @@ export class MainComponent implements OnInit, OnDestroy {
     chatGptRequestGetConvIdProgress = false;
 
     scrollInProgress = false;
+
+    copyTextSuccess:number = -1;
+    copyTextTimeout: any;
 
     constructor(
         private apiService: ApiService,
@@ -342,6 +346,17 @@ export class MainComponent implements OnInit, OnDestroy {
         if (this.chat.length > this.chatLimit) {
             this.chat.shift();
         }
+    }
+
+    copyText(text: string, index: number) {
+        if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(text);
+        }
+        this.copyTextSuccess = index;
+        clearTimeout(this.copyTextTimeout);
+        this.copyTextTimeout = setTimeout(() => {
+            this.copyTextSuccess = -1;
+        }, 1000)
     }
 
     scrollToBottom() {

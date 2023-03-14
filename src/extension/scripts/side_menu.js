@@ -1,5 +1,5 @@
 // Script that opens an iframe to load the ng2 page
-class sideMenu {
+class SideMenu {
     constructor() {
         if (typeof window.extentionLastEventListeners !== 'object') {
             window.extentionLastEventListeners = {}
@@ -12,7 +12,7 @@ class sideMenu {
 
     createSidebar () {
         const backgroundColor = '#ccc';
-        var iFrame = document.createElement("iframe");
+        let iFrame = document.createElement("iframe");
         iFrame.id = 'domain-tabs-sidebar-iframe';
         iFrame.src = chrome.runtime.getURL('index.html');
         // iFrame.setAttribute('sandbox',"allow-scripts");
@@ -25,17 +25,17 @@ class sideMenu {
         //     document.body.style.overflow='auto';
         // };
 
-        var newDiv = document.createElement("div");
+        let newDiv = document.createElement("div");
         newDiv.id = 'domain-tabs-sidebar';
         newDiv.classList.add('domain-tabs-sidebar-small');
 
         const background_img_url = chrome.runtime.getURL('/assets/images/login/login-bg-pattern.svg')
-        var newLeftArrow = document.createElement("div");
+        let newLeftArrow = document.createElement("div");
         newLeftArrow.id = 'domain-tabs-sidebar-left-arrow';
         newLeftArrow.style.backgroundImage = 'url(' + background_img_url + ')';
 
         const logo_img_url = chrome.runtime.getURL('/assets/images/Generative_Ai_Logo.png')
-        var newLeftArrowBackground = document.createElement("div");
+        let newLeftArrowBackground = document.createElement("div");
         newLeftArrowBackground.id = 'domain-tabs-sidebar-left-arrow-background';
         newLeftArrowBackground.style.backgroundImage = 'url(' + logo_img_url + ')';
         // newLeftArrow.style.borderTopColor = '20px solid ' + backgroundColor;
@@ -80,16 +80,16 @@ class sideMenu {
     }
 
     addEvents() {
-        var startPos
-        var origStartPos
-        var startDrag = false;
-        var moveStarted = false;
-        var newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
+        let startPos
+        let origStartPos
+        let startDrag = false;
+        let moveStarted = false;
+        let newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
         newLeftArrow.addEventListener('mousedown', (e) => {
             startDrag = true;
             startPos = this.getPointerPos(e, false);
             origStartPos = startPos;
-            var el = document.getElementById('domain-tabs-sidebar-iframe')
+            let el = document.getElementById('domain-tabs-sidebar-iframe')
             el.classList.add('disable-pointer-events')
         })
         window.addEventListener('mousemove', (e) => {
@@ -116,7 +116,7 @@ class sideMenu {
         })
         window.addEventListener('mouseup', (e) => {
             if (startDrag) {
-                var el = document.getElementById('domain-tabs-sidebar-iframe')
+                let el = document.getElementById('domain-tabs-sidebar-iframe')
                 el.classList.remove('disable-pointer-events')
                 e.preventDefault();
                 startDrag = false;
@@ -131,13 +131,13 @@ class sideMenu {
                 this.toggleSideBar();
             }
         })
-        var iframe = document.getElementById('domain-tabs-sidebar-iframe');
+        let iframe = document.getElementById('domain-tabs-sidebar-iframe');
         iframe.addEventListener('hover', (e) => {
             e.preventDefault();
         })
     }
     removeSidebar () {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (element.className.indexOf('domain-tabs-sidebar-closing') !== -1) {
             return;
         }
@@ -147,31 +147,31 @@ class sideMenu {
         }, 100);
     }
     hideSideBar() {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (element) {
             element.classList.remove('domain-tabs-sidebar-show')
         }
     }
     showSideBar() {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (element) {
             element.classList.add('domain-tabs-sidebar-show')
         }
     }
     expend() {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (!element.classList.contains('domain-tabs-sidebar-full')) {
             element.classList.add('domain-tabs-sidebar-full')
         }
     }
     minimize() {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (element.classList.contains('domain-tabs-sidebar-full')) {
             element.classList.remove('domain-tabs-sidebar-full')
         }
     }
     toggleSideBar() {
-        var element = document.getElementById('domain-tabs-sidebar');
+        let element = document.getElementById('domain-tabs-sidebar');
         if (element) {
             if (element.classList.contains('domain-tabs-sidebar-show')) {
                 this.hideSideBar();
@@ -182,73 +182,76 @@ class sideMenu {
     }
 }
 
-const menu = new sideMenu();
+try {
+    const sideMenu = new SideMenu();
 
-var sidebar = menu.getSideBar();
-if (sidebar) {
-    var lastWindowClick = window.extentionLastEventListeners['window-click'];
-    var lastChromeMessage = window.extentionLastEventListeners['chrome-message'];
-    if (lastChromeMessage) {
-        chrome.runtime.onMessage.removeListener(lastChromeMessage);
+    let sidebar = sideMenu.getSideBar();
+    if (sidebar) {
+        let lastWindowClick = window.extentionLastEventListeners['window-click'];
+        let lastChromeMessage = window.extentionLastEventListeners['chrome-message'];
+        if (lastChromeMessage) {
+            chrome.runtime.onMessage.removeListener(lastChromeMessage);
+        }
+        if (lastWindowClick) {
+            window.removeEventListener('click', lastWindowClick, true);
+        }
+        sideMenu.removeSidebar();
+    } else {
+        sideMenu.createSidebar();
+        chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
+        window.addEventListener('click', windowOnClick, true);
+        window.extentionLastEventListeners['window-click'] = windowOnClick;
+        window.extentionLastEventListeners['chrome-message'] = listenForMessagesFromExtension;
     }
-    if (lastWindowClick) {
-        window.removeEventListener('click', lastWindowClick, true);
-    }
-    menu.removeSidebar();
-} else {
-    menu.createSidebar();
-    chrome.runtime.onMessage.addListener(listenForMessagesFromExtension);
-    window.addEventListener('click', windowOnClick, true);
-    window.extentionLastEventListeners['window-click'] = windowOnClick;
-    window.extentionLastEventListeners['chrome-message'] = listenForMessagesFromExtension;
-}
 
-async function listenForMessagesFromExtension(request, sender, sendResponse) {
-    // console.log('side menu got the message', request.type);
-    if (request.type) {
-        if (request.type === 'toggle-sidebar') {
-            menu.toggleSideBar();
-        }
-        if (request.type === 'show-sidebar') {
-            menu.showSideBar();
-        }
-        if (request.type === 'hide-sidebar') {
-            menu.hideSideBar();
-        }
-        if (request.type === 'expend') {
-            menu.expend();
-        }
-        if (request.type === 'minimize') {
-            menu.minimize();
-        }
-    }
-    if (request.type && request.type === 'get-html') {
-        const body_list = document.querySelectorAll('body:not(#domain-tabs-sidebar)');
-        let html = '';
-        if (body_list.length) {
-            html = body_list[0];
-            if (request.content === 'html') {
-                html = html.innerHTML;
-            } else {
-                html = html.innerText;
+    async function listenForMessagesFromExtension(request, sender, sendResponse) {
+        // console.log('side menu got the message', request.type);
+        if (request.type) {
+            if (request.type === 'toggle-sidebar') {
+                sideMenu.toggleSideBar();
+            }
+            if (request.type === 'show-sidebar') {
+                sideMenu.showSideBar();
+            }
+            if (request.type === 'hide-sidebar') {
+                sideMenu.hideSideBar();
+            }
+            if (request.type === 'expend') {
+                sideMenu.expend();
+            }
+            if (request.type === 'minimize') {
+                sideMenu.minimize();
             }
         }
-        sendResponse({success: true, html: html})
-    } else {
-        sendResponse({success: true})
+        if (request.type && request.type === 'get-html') {
+            const body_list = document.querySelectorAll('body:not(#domain-tabs-sidebar)');
+            let html = '';
+            if (body_list.length) {
+                html = body_list[0];
+                if (request.content === 'html') {
+                    html = html.innerHTML;
+                } else {
+                    html = html.innerText;
+                }
+            }
+            sendResponse({success: true, html: html})
+        } else {
+            sendResponse({success: true})
+        }
+        return true;
     }
-    return true;
-}
 
-function windowOnClick(e) {
-    // console.log('window clicked', e.target)
-    var side_bar = e.target.closest(".domain-tabs-sidebar-show");
-    if (!side_bar) {
-        menu.hideSideBar();
-        if (chrome.runtime) {
-            chrome.runtime.sendMessage({
-                type: "hide-sidebar-on-window-click"
-            })
+    function windowOnClick(e) {
+        // console.log('window clicked', e.target)
+        let side_bar = e.target.closest(".domain-tabs-sidebar-show");
+        if (!side_bar) {
+            sideMenu.hideSideBar();
+            if (chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    type: "hide-sidebar-on-window-click"
+                })
+            }
         }
     }
-}
+
+} catch (e) {}

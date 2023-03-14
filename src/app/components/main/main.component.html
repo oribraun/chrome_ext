@@ -86,6 +86,10 @@
                     <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
                         <span class="sr-only"></span>
                     </div>
+                    <div class="clipboard" *ngIf="item.text && !sentQuestion">
+                        <i class="bi bi-clipboard pointer" (click)="copyText(item.text, i)" *ngIf="copyTextSuccess === -1 || copyTextSuccess !== i"></i>
+                        <i class="bi bi-hand-thumbs-up text-success" *ngIf="copyTextSuccess !== -1 && copyTextSuccess === i"></i>
+                    </div>
                 </div>
             </div>
         </div>
