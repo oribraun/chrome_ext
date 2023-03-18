@@ -1,7 +1,10 @@
-<div class="model container" *ngIf="page === 'privacy-model'" [ngClass]="{'model-empty': !modelResults}">
-   <div class="headline-no-prompt" *ngIf="!modelResults">
-<!--            <h2 class="text-center">Start Using {{host}}</h2>-->
-        <div class="info">
+<!--<div class="first-board" *ngIf="!showOnce">-->
+<!--    hi-->
+<!--</div>-->
+<div class="model" *ngIf="page === 'privacy-model'" [ngClass]="{'model-empty': !modelResults}">
+    <div class="headline-no-prompt" *ngIf="!modelResults">
+        <!--            <h2 class="text-center">Start Using {{host}}</h2>-->
+        <div class="info-model">
             <div class="text">Start using chatGpt</div>
         </div>
     </div>
@@ -11,7 +14,7 @@
             <div class="bold header">
                 <span class="text">Suggested Prompt</span> <i id="suggested_prompt_clipboard" class="bi bi-clipboard" (click)="copyPrompt()"></i>
             </div>
-            <div>
+            <div class="prompt">
                 {{modelResults.suggested_prompt}}
             </div>
         </div>
@@ -47,57 +50,178 @@
         </div>
     </div>
 </div>
-<div class="prompt-uploader container" *ngIf="page === 'prompt-uploader'">
-    <!--        <div class="headline-no-prompt">-->
-    <!--            <h2 class="text-center">Upload txt file to inject</h2>-->
-    <!--        </div>-->
-    <div class="info">
-        <div class="text">Upload txt file to inject to chatGpt</div>
-    </div>
-    <div class="mb-3">
-        <input class="form-control" id="formFileSm" type="file" (change)="fileChanged($event)">
-    </div>
-    <div class="error text-danger text-center" *ngIf="fileUploadErr">
-        {{fileUploadErr}}
-    </div>
-    <div class="file-text" *ngIf="fileText">
-        <h6 class="text-center">{{fileText.substring(0, 50) + '...'}}</h6>
-    </div>
-    <div class="text-center box">
-        <div class="buttons" *ngIf="fileText">
-            <button id="continue_button" (click)="copyTextToPrompt()">Copy To Prompt</button>
+<div class="prompt-uploader" *ngIf="page === 'prompt-uploader'">
+    <div class="drag-drop">
+        <div class="drop-area" appDragAndDrop (fileDropped)="filesDropped($event)">
+            <div class="dashed-area">
+                <div class="header">
+                    You can upload text (txt) files only.
+                </div>
+                Drop files here or click to select
+                <input class="file-input" type="file" multiple (change)="uploadFiles($event)">
+            </div>
         </div>
     </div>
+    <div class="results">
+        <div class="outer-scroll">
+            <div class="inner-scroll" #file_upload_results_scroll>
+                <div class="options-wrapper mt-3"  *ngIf="fileText">
+                    <div class="options"
+                         [@openClose]="uploadPromptExpend ? 'options-expend-small' : 'options-minimize'"
+                         [ngClass]="{'options-expend': uploadPromptExpend}">
+                        <div class="top-right-icon pointer" (click)="togglePromptOptions()">
+                            <div class="expend" *ngIf="!uploadPromptExpend"><i class="bi bi-chevron-down"></i></div>
+                            <div class="minimize" *ngIf="uploadPromptExpend"><i class="bi bi-chevron-up"></i></div>
+                        </div>
+                        <div class="head">
+                            <h6 class="text-center" *ngIf="fileText">Uploaded File Preview:</h6>
+                        </div>
+                        <div class="option">
+                            <div class="file-text" *ngIf="fileText">
+                                <h6 class="text-center">{{(fileText.length > 100 ? fileText.substring(0, 100) + '...' : fileText)}}</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3" *ngIf="fileText">
+                    <select class="form-select input mt-3" [(ngModel)]="fileTask" required>
+                        <option value="">Select Task</option>
+                        <ng-container *ngFor="let item of promptSettings">
+                            <option value="" *ngIf="item.visible && item.title" [ngValue]="item.title">{{item.title}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+                <div class="mt-3" *ngIf="fileUploadErr">
+                    <div class="error text-danger text-center">
+                        {{fileUploadErr}}
+                    </div>
+                </div>
+                <div class="mt-3" *ngIf="fileSubmitErr">
+                    <div class="error text-danger text-center" >
+                        {{fileSubmitErr}}
+                    </div>
+                </div>
+                <div class="options-wrapper mt-3 mb-1"  *ngIf="fileUploadResults">
+                    <div class="options"
+                         [@openClose]="uploadPromptResultsExpend ? 'options-expend-un-limit' : 'options-minimize'"
+                         [ngClass]="{'options-expend-un-limit': uploadPromptResultsExpend}">
+                        <div class="top-right-icon pointer" (click)="togglePromptResultsOptions()">
+                            <div class="expend" *ngIf="!uploadPromptResultsExpend"><i class="bi bi-chevron-down"></i></div>
+                            <div class="minimize" *ngIf="uploadPromptResultsExpend"><i class="bi bi-chevron-up"></i></div>
+                        </div>
+                        <div class="bottom-left-icon pointer" *ngIf="!fileSubmitInProgress" (click)="saveCurrentFileUploadResults()">
+                            <div class="expend"><i class="bi bi-save"></i></div>
+                        </div>
+                        <div class="head">
+                            <h6 class="text-center" *ngIf="fileUploadResults">
+                                Results:
+                                <div class="spinner-grow" role="status" *ngIf="fileSubmitInProgress">
+                                    <span class="sr-only"></span>
+                                </div>
+                            </h6>
+                        </div>
+                        <div class="option">
+                            <div class="file-text" *ngIf="fileUploadResults">
+                                <h6 class="text-center">{{fileUploadResults}}</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3" *ngIf="chatGptNeedToRefreshToken">
+                    <a href="https://chat.openai.com/chat" class="btn flex justify-center gap-2 btn-primary" target="_blank">
+                        Please login in ChatGpt
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--        <div class="text">-->
+    <!--            <div *ngIf="!fileText">Upload txt file to inject to chatGpt</div>-->
+    <!--            &lt;!&ndash;            <div class="file-text" *ngIf="fileText">&ndash;&gt;-->
+    <!--            &lt;!&ndash;                <h6 class="text-center">{{fileText.substring(0, 100) + '...'}}</h6>&ndash;&gt;-->
+    <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
+    <!--            <div class="text-center box" *ngIf="fileText">-->
+    <!--                <div class="buttons">-->
+    <!--                    <button id="continue_button" (click)="copyTextToPrompt()">Copy To Prompt</button>-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--        </div>-->
+    <div class="input-group text-center">
+        <button type="button" class="btn btn-outline-secondary" (click)="submitFileUpload()">Submit</button>
+    </div>
+    <!--    <div class="error text-danger text-center" *ngIf="fileUploadErr">-->
+    <!--        {{fileUploadErr}}-->
+    <!--    </div>-->
 </div>
 <div class="chat" *ngIf="page === 'chat'">
     <!--    <h2 class="text-center">Chat</h2>-->
-    <div class="input-group mb-1">
-        <input type="text" class="form-control" placeholder="Prompt" (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt">
+    <div class="input-group">
+        <!--        <input type="text" class="input form-control" placeholder="Prompt" (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt">-->
+        <textarea name="" id="" class="input form-control" placeholder="Prompt"
+                  cols="1" rows="1" style="resize: none;"
+                  (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt"></textarea>
         <button class="btn btn-outline-secondary" type="button" (click)="promptFromInput(this.chatPrompt)">Send</button>
     </div>
     <div class="results">
         <div class="outer-scroll">
-            <div class="inner-scroll"  #chat_results_scroll>
+            <div class="inner-scroll" #chat_results_scroll>
+                <div class="info-model-new">
+                    <div class="options-wrapper">
+                        <div class="options"
+                             [@openClose]="chatExpend ? 'options-expend-un-limit' : 'options-minimize'"
+                             [ngClass]="{'options-expend': chatExpend}">
+                            <div class="top-right-icon pointer" (click)="toggleChatOptions()">
+                                <div class="expend" *ngIf="!chatExpend"><i class="bi bi-chevron-down"></i></div>
+                                <div class="minimize" *ngIf="chatExpend"><i class="bi bi-chevron-up"></i></div>
+                            </div>
+                            <div class="head">
+                                <h6>There are couple of options you can start using Gaia's plugin:</h6>
+                            </div>
+                            <div class="option">
+                                1. You can insert a prompt below
+                            </div>
+                            <div class="option">
+                                2. You can send a prompt below or right click and:
+                                <div>- Summarize entire article (pdf not support yet)</div>
+                                <div>- Summarize selected text</div>
+                                <div>- Expand selected text</div>
+                                <div>- Ask a GAI chatbot</div>
+                            </div>
+                            <div class="option">
+                                3. You can create custom functions through settings that will be accessible through right click.
+                                Custom function adds a prefix for a prompt.
+                            </div>
+                            <br/>
+                            <div class="option">
+                                Note:
+                                A custom function of "create action items" for selected text "Lorem ipsum dolor sit amet" will have action items extracted from the selected text.
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="box" *ngFor="let item of chat; let i = index" [ngClass]="{'box-colored': i % 2}">
-                    <span>
+                    <span class="prompt-icon">
                         <i *ngIf="!(i % 2)" class="bi bi-person"></i>
                         <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
-                    </span> {{item.text}}
+                    </span>
+                    <span class="prompt" [innerHTML]="item.text"></span>
                     <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
                         <span class="sr-only"></span>
                     </div>
-                    <div class="clipboard" *ngIf="item.text && !sentQuestion">
-                        <i class="bi bi-clipboard pointer" (click)="copyText(item.text, i)" *ngIf="copyTextSuccess === -1 || copyTextSuccess !== i"></i>
-                        <i class="bi bi-hand-thumbs-up text-success" *ngIf="copyTextSuccess !== -1 && copyTextSuccess === i"></i>
+                    <div class="clipboard-wrapper"
+                         *ngIf="(item.text && !(i % 2)) || (item.text && (i % 2) && !chatRequestInProgress)">
+                        <div class="clipboard">
+                            <i class="bi bi-clipboard pointer" (click)="copyText(item.text, i)" *ngIf="copyTextSuccess === -1 || copyTextSuccess !== i"></i>
+                            <i class="bi bi-hand-thumbs-up text-success" *ngIf="copyTextSuccess !== -1 && copyTextSuccess === i"></i>
+                        </div>
                     </div>
                 </div>
+                <div class="mt-3 text-center" *ngIf="chatGptNeedToRefreshToken">
+                    <a href="https://chat.openai.com/chat" class="btn flex justify-center gap-2 btn-primary" target="_blank">
+                        Please login in ChatGpt
+                    </a>
+                </div>
             </div>
-        </div>
-        <div class="need-refresh-token text-center" *ngIf="chatGptNeedToRefreshToken">
-            <a href="https://chat.openai.com/chat" class="btn flex justify-center gap-2 btn-primary" target="_blank">
-                Please login in ChatGpt
-            </a>
-
         </div>
     </div>
 </div>

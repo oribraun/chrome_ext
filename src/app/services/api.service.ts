@@ -191,6 +191,12 @@ export class ApiService {
         )
     }
 
+    createTempFile(text: string) {
+        return this.http.post(this.serverBase + this.baseApiUser + 'create-temp-file', {'text': text},
+            this.httpOptions
+        )
+    }
+
 
     getGoogleToken(token: string) {
         return this.http.post(this.serverBase + this.baseApi + 'google/get-token', {'token': token},

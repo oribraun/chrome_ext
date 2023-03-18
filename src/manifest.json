@@ -2,7 +2,7 @@
   "name": "GAIA",
   "short_name": "GAIA",
   "description": "GAIA’s plugin enables you to use Generative AI models everywhere!",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "manifest_version": 3,
   "action": {
     "default_title": "Gaia"
@@ -31,8 +31,7 @@
     "tabs",
     "cookies",
     "webNavigation",
-    "contextMenus",
-    "identity"
+    "contextMenus"
   ],
   "icons": {
     "512": "/assets/icons/android-chrome-512x512.png",

@@ -87,22 +87,6 @@
     </div>
     <div class="menu">
         <ul class="menu-list menu-list-bottom">
-            <li class="menu-item" *ngIf="user.company_name">
-                <a class="menu-link" href="#"
-                   [ngClass]="{'active': currentPage === 'privacy-model'}"
-                   (click)="changePage($event, 'privacy-model')">
-                    Privacy Model
-                </a>
-            </li>
-            <li class="menu-separator" *ngIf="user.company_name">|</li>
-            <li class="menu-item">
-                <a class="menu-link" href="#"
-                   [ngClass]="{'active': currentPage === 'prompt-uploader'}"
-                   (click)="changePage($event, 'prompt-uploader')">
-                    Prompt Uploader
-                </a>
-            </li>
-            <li class="menu-separator">|</li>
             <li class="menu-item">
                 <a class="menu-link" href="#"
                    [ngClass]="{'active': currentPage === 'chat'}"
@@ -110,7 +94,28 @@
                     Chat
                 </a>
             </li>
+            <li class="menu-separator">|</li>
+            <li class="menu-item">
+                <a class="menu-link" href="#"
+                   [ngClass]="{'active': currentPage === 'prompt-uploader'}"
+                   (click)="changePage($event, 'prompt-uploader')">
+                    File Uploader
+                </a>
+            </li>
+            <ng-container *ngIf="isChatGptPage">
+                <li class="menu-separator" *ngIf="user.company_name">|</li>
+                <li class="menu-item" *ngIf="user.company_name">
+                    <a class="menu-link" href="#"
+                       [ngClass]="{'active': currentPage === 'privacy-model'}"
+                       (click)="changePage($event, 'privacy-model')">
+                        Privacy
+                    </a>
+                </li>
+            </ng-container>
         </ul>
+    </div>
+    <div class="welcome-header text-center">
+        Hey {{user?.username}} !
     </div>
 </div>
 <!-- Modal -->

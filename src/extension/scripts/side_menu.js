@@ -180,6 +180,20 @@ class SideMenu {
             }
         }
     }
+
+    sendInitDetails() {
+        const obj = {
+            type:'init-from-main-content-script',
+            host: window.location.host,
+            url: window.location.href
+        }
+        // console.log('sendInitDetails obj', obj)
+        setTimeout(() => {
+            chrome.runtime.sendMessage(obj, function(response) {
+                // console.log("Response: ", response);
+            });
+        }, 200)
+    }
 }
 
 try {
@@ -202,6 +216,7 @@ try {
         window.addEventListener('click', windowOnClick, true);
         window.extentionLastEventListeners['window-click'] = windowOnClick;
         window.extentionLastEventListeners['chrome-message'] = listenForMessagesFromExtension;
+        sideMenu.sendInitDetails();
     }
 
     async function listenForMessagesFromExtension(request, sender, sendResponse) {
@@ -224,17 +239,99 @@ try {
             }
         }
         if (request.type && request.type === 'get-html') {
-            const body_list = document.querySelectorAll('body:not(#domain-tabs-sidebar)');
-            let html = '';
-            if (body_list.length) {
-                html = body_list[0];
-                if (request.content === 'html') {
-                    html = html.innerHTML;
-                } else {
-                    html = html.innerText;
-                }
+
+            const body = document.body.cloneNode(true)
+            body.innerHTML = body.innerHTML
+                .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+                .replaceAll(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, "")
+                .replaceAll(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+                .replaceAll(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, "")
+                .replaceAll(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+                .replaceAll(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, "")
+                .replaceAll(/<a\b[^<]*(?:(?!<\/a>)<[^<]*)*<\/a>/gi, "")
+                .replaceAll(/<link\b[^<]*(?:(?!>))/gi, "")
+                .replaceAll(/<img\b[^<]*(?:(?!>))/gi, "")
+                .replaceAll(/<meta\b[^<]*(?:(?!>))/gi, "")
+                .replaceAll(/\t/g, '')
+                .replace(/\n +/g, '\n')
+                .replace(/\n+/g, '\n')
+                .replace(/ +/g, ' ');
+
+            let final_text = '';
+            if (request.content === 'html') {
+                final_text += body.innerHTML;
+            } else {
+                let text = body.innerText.replaceAll(/<\/?[^>]+(>|$)/gi, "")
+                    .replace(/\n +/g, '\n')
+                    .replace(/\n+/g, '\n')
+                    .replace(/ +/g, ' ');
+                final_text += text;
             }
-            sendResponse({success: true, html: html})
+            // console.log('final_text', final_text)
+            sendResponse({success: true, html: final_text})
+            // const body_list = document.querySelectorAll('body:not(#domain-tabs-sidebar)');
+            // const ignoreNodes = ['SCRIPT', 'NOSCRIPT', 'IFRAME', '#comment', '#text', 'IMG', 'LINK', 'META', 'FOOTER', 'STYLE']
+            // const excludeIds = ['domain-tabs-sidebar']
+            // let html = '';
+            // let final_text = '';
+            // if (body_list.length) {
+            //     html = body_list[0];
+            //     const nodes = html.childNodes;
+            //     const final_nodes = [];
+            //     for (let n of nodes) {
+            //         if (excludeIds.indexOf(n.id) === -1 && ignoreNodes.indexOf(n.nodeName) === -1) {
+            //             const clone = n.cloneNode(true);
+            //             clone.innerHTML = clone.innerHTML
+            //                 .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            //                 .replaceAll(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+            //                 .replaceAll(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, "")
+            //                 .replaceAll(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+            //                 .replaceAll(/<a\b[^<]*(?:(?!<\/a>)<[^<]*)*<\/a>/gi, "")
+            //                 .replaceAll(/<link\b[^<]*(?:(?!>))/gi, "")
+            //                 .replaceAll(/<img\b[^<]*(?:(?!>))/gi, "")
+            //                 .replaceAll(/<meta\b[^<]*(?:(?!>))/gi, "")
+            //                 .replaceAll(/\t/g, '')
+            //                 .replace(/\n +/g, '\n')
+            //                 .replace(/\n+/g, '\n')
+            //                 .replace(/ +/g, ' ');
+            //
+            //             final_nodes.push(clone)
+            //             // console.log('final_nodes', final_nodes)
+            //             if (request.content === 'html') {
+            //                 final_text += clone.innerHTML;
+            //             } else {
+            //                 let text = clone.innerText.replaceAll(/<\/?[^>]+(>|$)/gi, "")
+            //                     .replace(/\n +/g, '\n')
+            //                     .replace(/\n+/g, '\n')
+            //                     .replace(/ +/g, ' ');
+            //                 final_text += text;
+            //             }
+            //             // console.log('n.nodeName', n.nodeName)
+            //         }
+            //     }
+            // }
+            // console.log('final_text', final_text)
+            // sendResponse({success: true, html: final_text})
+
+            // const body_list = document.querySelectorAll('body:not(#domain-tabs-sidebar)');
+            // let html = '';
+            // if (body_list.length) {
+            //     html = body_list[0];
+            //     if (request.content === 'html') {
+            //         html = html.innerHTML;
+            //     } else {
+            //         html = html.innerText;
+            //     }
+            // }
+            // sendResponse({success: true, html: html})
+        } else if (request.type && request.type === 'copy-text') {
+            if (navigator && navigator.clipboard) {
+                const res = request.response;
+                navigator.clipboard.writeText(res.text);
+                sendResponse({success: true})
+            } else {
+                sendResponse({success: false})
+            }
         } else {
             sendResponse({success: true})
         }
@@ -248,7 +345,7 @@ try {
             sideMenu.hideSideBar();
             if (chrome.runtime) {
                 chrome.runtime.sendMessage({
-                    type: "hide-sidebar-on-window-click"
+                    type: "hide-settings-on-window-click"
                 })
             }
         }

@@ -94,7 +94,20 @@ class ChatGPTClient {
         const maxRequestCount = models.length < 5 ? 5 : models.length;
 
         const sendRequestToChatGPT = async () => {
-            if (requestCount > maxRequestCount) return cb({text:"Unauthorized"});
+            const response = {
+                err: 0,
+                errMessage: '',
+                status: 0,
+                text: '',
+                data: {},
+                toManyRequests: false,
+                messageLength: false
+            }
+            if (requestCount > maxRequestCount) {
+                response.err = 1;
+                response.errMessage = "Unauthorized"
+                return cb(response);
+            }
 
             const resp = await fetch(this.chatGPTApiUrl, {
                 method: "POST",
@@ -107,29 +120,54 @@ class ChatGPTClient {
                 }),
             });
             requestCount++;
-
-            if (resp.status === 401 || resp.status === 403) {
-                sendAnalytics({ event: "error", type: resp.status });
-                return cb({text:"Unauthorized"});
-            }
-            if (resp.status === 429) { // to many requests
-                const resJson = await resp.json();
-                sendAnalytics({ event: "error", type: resp.status, data: resJson });
-                return cb({text:resJson?.detail, toManyRequests: true});
-            }
-            if (resp.status === 413) { // to many requests
-                const resJson = await resp.json();
-                sendAnalytics({ event: "error", type: resp.status, data: resJson });
-                return cb({text:resJson?.detail?.message, messageLength: true});
-            }
-            if ([400, 404, 422, 500].includes(resp.status)) {
-                if (retryCount < models.length) {
-                    retryCount++;
-                    return sendRequestToChatGPT();
+            if (resp.status !== 200) {
+                response.err = 1
+                response.status = resp.status;
+                let resJson;
+                try {
+                    resJson = await resp.json();
+                } catch (e){}
+                response.data = resJson;
+                if (resp.status === 401 || resp.status === 403) {
+                    response.errMessage = "Unauthorized";
+                } else if (resp.status === 429) {
+                    response.errMessage = resJson?.detail;
+                    response.toManyRequests = true;
+                } else if (resp.status === 413) {
+                    response.errMessage = resJson?.detail?.message;
+                    response.messageLength = true;
+                } else {
+                    response.errMessage = resJson?.detail
                 }
-                sendAnalytics({ event: "error", type: resp.status });
-                return cb({text:"Unauthorized"});
+                sendAnalytics({ event: "error", type: resp.status, response: response });
+                return cb(response);
             }
+
+            // if (resp.status === 401 || resp.status === 403) {
+            //     sendAnalytics({ event: "error", type: resp.status });
+            //     return cb({text:"Unauthorized"});
+            // }
+            // if (resp.status === 429) { // to many requests
+            //     const resJson = await resp.json();
+            //     sendAnalytics({ event: "error", type: resp.status, data: resJson });
+            //     return cb({text:resJson?.detail, toManyRequests: true});
+            // }
+            // if (resp.status === 413) { // to many requests
+            //     const resJson = await resp.json();
+            //     sendAnalytics({ event: "error", type: resp.status, data: resJson });
+            //     return cb({text:resJson?.detail?.message, messageLength: true});
+            // }
+            // if ([400, 404, 422, 500].includes(resp.status)) {
+            //     // if (retryCount < models.length) {
+            //     //     retryCount++;
+            //     //     return sendRequestToChatGPT();
+            //     // }
+            //     sendAnalytics({ event: "error", type: resp.status });
+            //     const resJson = await resp.json();
+            //     console.log('resJson', resJson)
+            //     return cb({text:"Unauthorized", detail: resJson?.detail});
+            //     // return cb({text:"Unauthorized"});
+            // }
 
             for await (const chunk of this.streamAsyncIterable(resp.body)) {
                 try {
@@ -147,8 +185,10 @@ class ChatGPTClient {
                             // const message_id = data.message.id;
                             // const conversation_id = data.conversation_id;
                             const text = data.message?.content?.parts?.[0];
+                            response.text = text;
+                            response.data = data
                             if (text) {
-                                cb({text: text, data: data});
+                                cb(response);
                             }
                         }
                     });

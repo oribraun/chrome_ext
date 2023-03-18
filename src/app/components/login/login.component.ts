@@ -88,7 +88,7 @@ export class LoginComponent implements OnInit {
             const data = response.data;
             if (!response.err) {
                 this.setupUser(data);
-                this.chromeExtensionService.hideSidebar();
+                // this.chromeExtensionService.hideSidebar();
                 this.router.navigate([''])
             } else {
                 this.errMessage = response.errMessage;

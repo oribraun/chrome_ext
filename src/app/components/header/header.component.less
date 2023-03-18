@@ -51,6 +51,9 @@
             justify-content: center;
             .menu-item {
                 position: relative;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
                 .menu-link {
                     text-decoration: none;
                     color: inherit;
@@ -98,6 +101,10 @@
                 margin-left: 5px;
             }
         }
+    }
+    .welcome-header {
+        color: var(--bgColorGreen);
+        font-weight: 500;
     }
 }
 

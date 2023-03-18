@@ -15,6 +15,7 @@ import { MainComponent } from './components/main/main.component';
 import {CustomInterceptor} from "./components/custom-interceptor";
 import {MyRouter} from "./components/my.router";
 import { GoogleSignInDirective } from './directives/google-sign-in.directive';
+import { DragAndDropDirective } from './directives/drag-and-drop.directive';
 import { GoogleSigninComponent } from './components/auth/google-signin/google-signin.component';
 import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
@@ -30,6 +31,7 @@ import {environment} from "@environment";
         HeaderComponent,
         MainComponent,
         GoogleSigninComponent,
+        DragAndDropDirective
     ],
     imports: [
         BrowserModule,

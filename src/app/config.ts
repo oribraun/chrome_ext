@@ -9,6 +9,8 @@ export class Config {
     private _user: any = '';
     private _server_host: string = '';
     private _server_host_subject: Subject<any> = new Subject<any>();
+    private _server_url: string = '';
+    private _server_url_subject: Subject<any> = new Subject<any>();
     private _is_company = false;
     private _is_company_subject: Subject<any> = new Subject<any>();
     private _token: string = '';
@@ -16,6 +18,11 @@ export class Config {
     private _user_subject: Subject<any> = new Subject<any>();
     private _token_subject: Subject<string> = new Subject<string>();
     private _csrf_token_subject: Subject<string> = new Subject<string>();
+
+    private _force_binding_subject: Subject<any> = new Subject<any>();
+
+    private _prompt_settings: any[];
+    private _prompt_settings_subject: Subject<any> = new Subject<any>();
 
     get user(): any {
         return this._user;
@@ -41,6 +48,23 @@ export class Config {
 
     set server_host_subject(value: Subject<any>) {
         this._server_host_subject = value;
+    }
+
+    get server_url(): string {
+        return this._server_url;
+    }
+
+    set server_url(value: string) {
+        this._server_url = value;
+        this._server_url_subject.next(this.server_url);
+    }
+
+    get server_url_subject(): Subject<any> {
+        return this._server_url_subject;
+    }
+
+    set server_url_subject(value: Subject<any>) {
+        this._server_url_subject = value;
     }
 
     get is_company(): boolean {
@@ -100,6 +124,31 @@ export class Config {
 
     set csrf_token_subject(value: Subject<any>) {
         this._csrf_token_subject = value;
+    }
+
+    get force_binding_subject(): Subject<any> {
+        return this._force_binding_subject;
+    }
+
+    set force_binding_subject(value: Subject<any>) {
+        this._force_binding_subject = value;
+    }
+
+    get prompt_settings(): any[] {
+        return this._prompt_settings;
+    }
+
+    set prompt_settings(value: any[]) {
+        this._prompt_settings = value;
+        this.prompt_settings_subject.next(this._prompt_settings);
+    }
+
+    get prompt_settings_subject(): Subject<any> {
+        return this._prompt_settings_subject;
+    }
+
+    set prompt_settings_subject(value: Subject<any>) {
+        this._prompt_settings_subject = value;
     }
 
     resetUserCreds() {

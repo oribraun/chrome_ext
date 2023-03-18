@@ -5,6 +5,7 @@ import {IsActiveMatchOptions, Router} from "@angular/router";
 import {MyRouter} from "../my.router";
 import {MessagesService} from "../../services/messages.service";
 import {ChromeExtensionService} from "../../services/chrome-extension.service";
+import {environment} from "@environment";
 
 declare var $: any;
 
@@ -16,7 +17,10 @@ declare var $: any;
 export class HeaderComponent implements OnInit, OnDestroy {
     user: any;
     isCompany = false;
-    currentPage = 'privacy-model'
+    server_host: string;
+    server_url: string;
+    isChatGptPage = false;
+    currentPage = 'chat'
     routerLinkActiveOptions: IsActiveMatchOptions = {
         fragment: "exact",
         paths: "exact",
@@ -44,10 +48,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.user = this.config.user;
+        this.setHostDetails();
         this.subscriptions.push(
             this.config.user_subject.subscribe((user) => {
                 this.user = user;
                 this.config.is_company = this.user.company_name;
+            })
+        )
+        // this.subscriptions.push(
+        //     this.config.server_host_subject.subscribe(() => {
+        //         this.server_host = this.config.server_host
+        //     })
+        // )
+        // this.subscriptions.push(
+        //     this.config.server_url_subject.subscribe(() => {
+        //         this.server_url = this.config.server_url;
+        //         this.isChatGptPage = this.server_url.indexOf('chat.openai.com/chat') > -1
+        //     })
+        // )
+        this.subscriptions.push(
+            this.config.force_binding_subject.subscribe(() => {
+                this.setHostDetails();
+                this.forceBindChanges();
             })
         )
         // this.isCompany = this.user.company_name;
@@ -65,11 +87,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
             })
         )
         this.subscriptions.push(
-            this.chromeExtensionService.ListenFor("hide-sidebar-on-window-click").subscribe(() => {
+            this.chromeExtensionService.ListenFor("hide-settings-on-window-click").subscribe(() => {
                 this.hideSettingsModel();
             })
         )
         return;
+    }
+
+    setHostDetails() {
+        this.server_host = this.config.server_host;
+        this.server_url = this.config.server_url;
+        this.isChatGptPage = this.server_url.indexOf('chat.openai.com/chat') > -1;
+
+        if (environment.development) {
+            this.isChatGptPage = true;
+        }
     }
 
     async getPromptSettings() {
@@ -184,6 +216,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
 
     setExtensionPrompts() {
+        this.config.prompt_settings = this.promptSettings;
         if (chrome.runtime) {
             chrome.runtime.sendMessage({
                 type: "UPDATE_CUSTOM_PROMPT",
@@ -219,6 +252,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         event.preventDefault();
         this.currentPage = page;
         this.messagesService.Broadcast('change-main-page', {page: page});
+        this.forceBindChanges();
     }
 
     forceBindChanges() {

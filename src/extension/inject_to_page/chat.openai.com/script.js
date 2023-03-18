@@ -133,7 +133,8 @@ class Main {
                 sendResponse({success: true})
             }
 
-            function callOurPrivacyModelFromAngular(val) {
+
+            const callOurPrivacyModelFromAngular = (val) => {
                 chrome.runtime.sendMessage({type: 'privacy-model', prompt: val}, function (response) {
                     // console.log("Response from angular: ", response);
                     if (response) {
@@ -147,13 +148,13 @@ class Main {
                 });
             }
 
-            async function onKeyDownHandler(e) {
-                if (e.key === 'Enter') {
+            const onKeyDownHandler = async (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     button.click();
                 }
             }
-            async function onClickHandler(e) {
+            const onClickHandler = async (e) => {
                 const val = textarea_clone.value;
                 textarea.value = val;
                 if (button_click_do_original) {
@@ -193,7 +194,7 @@ class Main {
             //     }, 1500)
             // }
 
-            function onDivChange(e) {
+            const onDivChange = (e) => {
                 // console.log('onDivChange e', e)
                 textarea_clone_list = document.getElementsByClassName('textarea_clone');
                 if (textarea_clone_list && textarea_clone_list.length) {
@@ -204,12 +205,12 @@ class Main {
                     if (debug) {
                         console.log('need to inject')
                     }
-                    onRemoveInitAngular(true)
-                    onInitAngular(true)
+                    this.onRemoveInitAngular(false)
+                    this.onInitAngular(false)
 
                 }
             }
-            function forceContinue() {
+            const forceContinue = () => {
                 button_click_do_original = true;
                 button.click();
                 setTimeout(() => {
@@ -217,7 +218,7 @@ class Main {
                 })
             }
 
-            this.sendHostNameToContentScript();
+            // this.sendHostNameToContentScript();
             textarea.style.display = 'none'
             textarea_clone.addEventListener('keydown', onKeyDownHandler);
             textarea_parent.append(textarea_clone);
@@ -277,8 +278,9 @@ class Main {
             const textarea_clone_injected = textarea_clone_list[0];
             const textarea_clone_injected_parent = textarea_clone_injected.parentElement;
             const buttons_list = textarea_clone_injected_parent.getElementsByTagName('button');
+            let button;
             if (buttons_list && buttons_list.length) {
-                const button = buttons_list[0]
+                button = buttons_list[0]
                 if(!button) {
                     return;
                 }
@@ -305,7 +307,9 @@ class Main {
             if (lastOnDivChange && target) {
                 target.removeEventListener("DOMNodeInserted", lastOnDivChange, false);
             }
-            button.classList.remove('button_clone');
+            if(button) {
+                button.classList.remove('button_clone');
+            }
             textarea_clone_injected_parent.removeChild(textarea_clone_injected);
 
             const form_list = document.getElementsByTagName('form');

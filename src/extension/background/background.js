@@ -84,16 +84,16 @@ class GaiaExtension {
                     // console.log('info', info)
                     if (info.menuItemId === 'gaiaSummarize') {
                         item_title = 'Summarize:';
-                        text = item_title + '\n ' + text;
+                        text = item_title + '\n' + text;
                     } else if (info.menuItemId === 'gaiaAsk') {
                         item_title = 'Ask:';
-                        text = item_title + '\n ' + text;
+                        text = item_title + '\n' + text;
                     } else if (info.menuItemId === 'gaiaExpend') {
                         item_title = 'Expend:';
-                        text = item_title + '\n ' + text;
+                        text = item_title + '\n' + text;
                     } else if (info.menuItemId === 'gaiaAllSummarize') {
                         item_title = 'gaiaAllSummarize';
-                        text = 'Summarize:' + '\n ';
+                        text = 'Summarize:' + '\n';
                     } else {
                         const orig_text = text;
                         text = '';

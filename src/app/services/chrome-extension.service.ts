@@ -17,6 +17,7 @@ export class ChromeExtensionService {
     }
     private _listenToMessages: Subject<any> = new Subject<any>();
     private listenersMap: any = {};
+    private chromeCurrentTabId: number;
     private chromeRuntimeListener: any;
     private lastChatGptId: string;
     private chatGptPort: any
@@ -27,13 +28,36 @@ export class ChromeExtensionService {
         private config: Config,
         // private router: MyRouter
     ) {
+        this.getActiveTabId();
         this.setUpChromeRuntimeListener()
         this.setUpChatGptPortListener()
     }
 
+    async getActiveTabId() {
+        if (!this.chromeCurrentTabId) {
+            if (chrome.tabs) {
+                const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+                if (tabs && tabs.length && tabs[0].id) {
+                    this.chromeCurrentTabId = tabs[0].id
+                }
+            }
+            console.log("active tab retrieved : " + this.chromeCurrentTabId);
+        }
+    }
+
     setUpChromeRuntimeListener() {
-        this.chromeRuntimeListener = (request: any, sender: any, sendResponse: any) => {
+        this.chromeRuntimeListener = async (request: any, sender: any, sendResponse: any) => {
+            await this.getActiveTabId();
+            // if sender tab means this message coming from another content script
+            // and we want to make sure it will continue only if it's the current tab
+            if (sender.tab && this.chromeCurrentTabId !== sender.tab.id && !request.notify_all_tabs) {
+                sendResponse({success: false, not_current_tab: true})
+                return;
+            }
             console.log('got from content script request for ', request)
+            // chrome.tabs.query({active: true, lastFocusedWindow: true}, function(tabs) {
+            //     console.log("active tab retrieved : " + tabs[0].id);
+            // });   // <-- add `);
             if (request.type) {
                 if (request.type in this.requestTypeLoginRequiredMap && this.requestTypeLoginRequiredMap[request.type]) {
                     // need to check login user
@@ -43,11 +67,21 @@ export class ChromeExtensionService {
                         return;
                     }
                 }
-                if (request.type === 'init-from-content-script') {
+                if (request.type === 'init-from-main-content-script') {
                     if (request.host) {
-                        this.config.server_host = request.host
+                        this.config.server_host = request.host;
                     }
-                    sendResponse({success: true, message: 'init from content script', request: request})
+                    if (request.url) {
+                        this.config.server_url = request.url;
+                    }
+                    this.config.force_binding_subject.next('');
+                    sendResponse({success: true, message: 'init from main content script', request: request})
+                }
+                if (request.type === 'init-from-content-script') {
+                    // if (request.host) {
+                    //     this.config.server_host = request.host
+                    // }
+                    // sendResponse({success: true, message: 'init from content script', request: request})
                 } else {
                     if (this.events[request.type]) {
                         this.Broadcast(request.type, {
@@ -224,17 +258,21 @@ export class ChromeExtensionService {
     async sendMessageToContentScript(type: string, obj: any) {
         return new Promise((resolve, reject) => {
             try {
-                chrome.tabs.query({active: true, lastFocusedWindow: true}, (tabs) => {
-                    if (tabs && tabs.length && tabs[0].id) {
-                        console.log('sending message to contet script', type)
-                        chrome.tabs.sendMessage(tabs[0].id, {type: type, response: obj}, (response) => {
-                            console.log('content script got the message - ' + type, response)
-                            resolve(response);
-                        })
-                    } else {
-                        reject('no tabs')
-                    }
-                })
+                if (chrome.tabs) {
+                    chrome.tabs.query({active: true, lastFocusedWindow: true}, (tabs) => {
+                        if (tabs && tabs.length && tabs[0].id) {
+                            console.log('sending message to contet script', type)
+                            chrome.tabs.sendMessage(tabs[0].id, {type: type, response: obj}, (response) => {
+                                console.log('content script got the message - ' + type, response)
+                                resolve(response);
+                            })
+                        } else {
+                            reject('no tabs')
+                        }
+                    })
+                } else {
+                    resolve({success: true});
+                }
             } catch (err)  {
                 reject(err);
             }
