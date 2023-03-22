@@ -1,9 +1,16 @@
 // Script that opens an iframe to load the ng2 page
 class SideMenu {
+
+    storageIconPosKey = 'icon-pos-top';
     constructor() {
         if (typeof window.extentionLastEventListeners !== 'object') {
             window.extentionLastEventListeners = {}
         }
+        this.init()
+    }
+
+    async init() {
+        this.getIconPosition()
     }
 
     getSideBar() {
@@ -34,7 +41,7 @@ class SideMenu {
         newLeftArrow.id = 'domain-tabs-sidebar-left-arrow';
         newLeftArrow.style.backgroundImage = 'url(' + background_img_url + ')';
 
-        const logo_img_url = chrome.runtime.getURL('/assets/images/Generative_Ai_Logo.png')
+        const logo_img_url = chrome.runtime.getURL('/assets/images/Generative_Ai_Icon.png')
         let newLeftArrowBackground = document.createElement("div");
         newLeftArrowBackground.id = 'domain-tabs-sidebar-left-arrow-background';
         newLeftArrowBackground.style.backgroundImage = 'url(' + logo_img_url + ')';
@@ -121,6 +128,7 @@ class SideMenu {
                 e.preventDefault();
                 startDrag = false;
                 startPos = null;
+                this.setIconPosition();
                 setTimeout(() => {
                     moveStarted = false;
                 })
@@ -178,6 +186,27 @@ class SideMenu {
             } else {
                 this.showSideBar();
             }
+        }
+    }
+
+    setIconPosition() {
+        let newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
+        const objToSet = {}
+        objToSet[this.storageIconPosKey] = newLeftArrow.style.top;
+        chrome.storage.sync.set(objToSet);
+    }
+
+    resetIconPosition() {
+        chrome.storage.sync.remove(this.storageIconPosKey);
+        let newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
+        newLeftArrow.style.top = '';
+    }
+
+    async getIconPosition() {
+        const obj =  await chrome.storage.sync.get(this.storageIconPosKey);
+        if (obj && obj[this.storageIconPosKey]) {
+            let newLeftArrow = document.getElementById('domain-tabs-sidebar-left-arrow');
+            newLeftArrow.style.top = obj[this.storageIconPosKey];
         }
     }
 

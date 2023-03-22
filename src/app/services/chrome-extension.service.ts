@@ -21,6 +21,7 @@ export class ChromeExtensionService {
     private chromeRuntimeListener: any;
     private lastChatGptId: string;
     private chatGptPort: any
+    private chatGptPortIsConnect = false;
     private chatGptListener: any
     private chatGptLastMessageId: string;
     private chatGptLastParentId: string;
@@ -184,6 +185,10 @@ export class ChromeExtensionService {
                 //   port.postMessage({answer: "Madame... Bovary"});
             }
             this.chatGptPort = chrome.runtime.connect({name: "chatGptPort"});
+            this.chatGptPortIsConnect = true;
+            this.chatGptPort.onDisconnect.addListener(() => {
+                this.chatGptPortIsConnect = false;
+            });
             this.chatGptPort.onMessage.addListener(this.chatGptListener);
         }
     }
@@ -193,19 +198,19 @@ export class ChromeExtensionService {
     }
 
     sendMessageToChatGpt(message: string, conversation_id = '', last_message_id = '') {
-        if (this.chatGptPort) {
+        if (this.chatGptPort && this.chatGptPortIsConnect) {
             this.chatGptPort.postMessage({type: 'chatGptRequest', payload: this.createMessage(message, conversation_id, last_message_id)});
         }
     }
 
     generalSendMessageToChatGpt(type: string, obj: any) {
-        if (this.chatGptPort) {
+        if (this.chatGptPort && this.chatGptPortIsConnect) {
             this.chatGptPort.postMessage({type: type, ...obj});
         }
     }
 
     refreshGptToken() {
-        if (this.chatGptPort) {
+        if (this.chatGptPort && this.chatGptPortIsConnect) {
             this.chatGptPort.postMessage({type: 'chatGptRefreshToken'});
         }
     }
@@ -407,7 +412,7 @@ export class ChromeExtensionService {
         if (chrome.runtime) {
             chrome.runtime.sendMessage({
                 type: "SEND_ANALYTICS",
-                details: {
+                obj: {
                     // "event": "ask-button-executed",
                     // "type": "general-ask-button-click"
                     event: event,

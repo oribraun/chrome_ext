@@ -7,6 +7,7 @@ import {MyRouter} from "../my.router";
 import {HttpEventType} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {MessagesService} from "../../services/messages.service";
+import * as pdfjsLib from "pdfjs-dist";
 
 import {
     trigger,
@@ -68,51 +69,98 @@ export class MainComponent implements OnInit, OnDestroy {
 
     // privacy model config
     modelResults: any;
-    chat: any = [
-        // {text: 'hi there'},
-        // {text: 'hi there2 asdf asdf asf asd fasdf as fasdf as dfa sfas fas dfas fas dfasdf as fsadfasf asd fas fas dfas dfa sdf asdf asd fasd fasd fasd fasdf as fas'},
-        // {text: ''},
-    ]
-    chatLimit = 50;
-    chatMaxLength = 14300;
-    chatMaxLengthHe = 3300;
     chatExpend = true;
     uploadPromptExpend = true;
     uploadPromptResultsExpend = true;
-    sentQuestion = false;
-    gotFirstAnswer = false;
+
     endPoint: any
     host: any
     user: any;
     resultsModelTest: any;
     privacyModelListener: any;
     getAnswerListener: any;
-    chatRequestInProgress = false;
+
+    // chat config
+    chatLimit = 50;
+    chatMaxLength = 12000;
+    chatMaxLengthHe = 3000;
+    chat: any = [
+        // {text: 'hi there'},
+        // {text: ''},
+        // {text: 'hi there2 asdf asdf asf asd fasdf as fasdf as dfa sfas fas dfas fas dfasdf as fsadfasf asd fas fas dfas dfa sdf asdf asd fasd fasd fasd fasdf as fas'},
+    ]
+    sentQuestionToChat = false;
+    gotFirstAnswerFromChat = false;
+    chatGptRequestInProgress = false;
+    chatGptRequestError = false;
+    chatAutoScrollEnabled = true;
     chatPrompt = '';
-
-    //prompt upload config
-    fileText = ''
-    fileName = ''
-    fileTask = ''
-    fileSubmitInProgress = false;
-    fileUploadErr = ''
-    fileSubmitErr = ''
-    fileUploadGptHtmlSplitChunks: any[] = [];
-    fileUploadGptHtmlSplitResults: any[] = [];
-    fileUploadResults = ''
-    fileUploadScrollInProgress = false;
-    promptSettings: any;
-
-    subscriptions: any = []
-
     chatGptNeedToRefreshToken = false;
     chatGptCurrentMessage = '';
     chatGptCurrentResult = '';
     chatGptLastMessageId = '';
     chatGptConversationId = '';
-    chatGptRequestGetConvIdProgress = false;
+    // chatGptRequestGetConvIdProgress = false;
     chatGptHtmlSplitChunks: any[] = [];
     chatGptHtmlSplitResults: any[] = [];
+    chatGptHtmlTotalChunks: number = -1;
+    chatGptHtmlProgress: number = -1;
+    chatGptScrollListener: any = (e: any) => {
+        const element = e.target;
+        const rect = element.getBoundingClientRect()
+        // console.log('e.target.scrollHeight', e.target.scrollHeight)
+        // console.log('e.target.scrollTop', e.target.scrollTop)
+        // console.log('Math.floor(rect.height)', Math.floor(rect.height))
+        // console.log('e.target.scrollHeight - e.target.scrollTop', e.target.scrollHeight - e.target.scrollTop)
+        setTimeout(() => {
+            console.log('element.scrollHeight - element.scrollTop - element.clientHeight', element.scrollHeight - element.scrollTop - element.clientHeight)
+            if (Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 17){
+                console.log('bottom');
+                // this.chatAutoScrollEnabled = true;
+            } else {
+                console.log('not bottom');
+                // this.chatAutoScrollEnabled = false;
+            }
+        })
+    };
+
+
+    // file upload config
+    fileText = ''
+    fileType = ''
+    fileName = ''
+    fileTask = ''
+    fileSubmitInProgress = false;
+    fileLoading = false;
+    fileUploadErr = ''
+    fileSubmitErr = ''
+    fileUploadGptHtmlSplitChunks: any[] = [];
+    fileUploadGptHtmlSplitResults: any[] = [];
+    fileUploadGptHtmlTotalChunks: number = -1;
+    fileUploadGptHtmlProgress: number = -1;
+    fileUploadResults = ''
+    fileUploadScrollInProgress = false;
+    fileAutoScrollEnabled = true;
+    fileChatGptLastMessageId = '';
+    fileChatGptConversationId = '';
+    fileScrollListener: any = (e: any) => {
+        const rect = e.target.getBoundingClientRect()
+        console.log('rect', rect)
+        console.log('e.target.scrollHeight', e.target.scrollHeight)
+        console.log('e.target.scrollTop', e.target.scrollTop)
+        console.log('Math.floor(rect.height)', Math.floor(rect.height))
+        console.log('e.target.scrollHeight - e.target.scrollTop', e.target.scrollHeight - e.target.scrollTop)
+        if (Math.floor(rect.height) === (e.target.scrollHeight - e.target.scrollTop)){
+            console.log('bottom');
+            // this.fileAutoScrollEnabled = true;
+        } else {
+            console.log('not bottom');
+            // this.fileAutoScrollEnabled = false;
+        }
+    };
+    promptSettings: any;
+
+    subscriptions: any = []
 
     scrollInProgress = false;
 
@@ -166,6 +214,21 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.promptSettings = this.config.prompt_settings;
             })
         )
+        // setTimeout(() => {
+        //     this.testChatScroll()
+        // })
+    }
+
+    testChatScroll() {
+        this.chat = [
+            {text: 'hi there'},
+            {text: ''}
+        ]
+        setInterval(() => {
+            this.chat[this.chat.length - 1].text += ' a';
+            this.addChatScrollListener();
+            this.scrollToBottom();
+        }, 100)
     }
 
     setUpInitPage() {
@@ -226,26 +289,30 @@ export class MainComponent implements OnInit, OnDestroy {
         })
         this.getAnswerListener = this.chromeExtensionService.ListenFor("chat").subscribe((obj) => {
             // console.log('this.router.url',this.router.url)
-            if (this.chatRequestInProgress) {
+            if (this.chatGptRequestInProgress) {
                 this.chromeExtensionService.showSidebar('ListenFor chat');
                 return;
             }
-            this.chatRequestInProgress = true;
+            this.chatGptRequestInProgress = true;
+            this.fileAutoScrollEnabled = true;
             this.changePage('chat')
             const request = obj.request;
             const sender = obj.sender;
             const sendResponse = obj.sendResponse;
             const text = request.text;
             const title = request.title;
-            this.chromeExtensionService.sendAnalytics('chat', title, {user_email: this.config.user?.email});
             if (request.noGptToken) {
                 this.chatGptNeedToRefreshToken = true;
-                this.chatRequestInProgress = false;
+                this.chatGptRequestInProgress = false;
+                this.chatGptRequestError = false;
                 this.chromeExtensionService.showSidebar('ListenFor chat');
                 this.forceBindChanges();
+                this.sendChatAnalytics(text, 'noGptToken');
                 return;
             }
+            this.sendChatAnalytics(text, title);
             this.chatGptNeedToRefreshToken = false;
+
             if (title === 'gaiaAllSummarize') {
                 this.chromeExtensionService.sendMessageToContentScript('get-html', {content: 'text'}).then((res: any) => {
 
@@ -256,7 +323,7 @@ export class MainComponent implements OnInit, OnDestroy {
                     //         this.chatProcessPrompt(url_text)
                     //     } else {
                     //         console.log('err', res.errMessage)
-                    //         this.chatRequestInProgress = false;
+                    //         this.chatGptRequestInProgress = false;
                     //         this.forceBindChanges();
                     //         return;
                     //     }
@@ -280,18 +347,23 @@ export class MainComponent implements OnInit, OnDestroy {
                         maxLength = this.chatMaxLengthHe;
                     }
                     this.chatGptHtmlSplitChunks = [];
+                    this.chatGptHtmlTotalChunks = -1;
+                    this.chatGptHtmlProgress = 0;
                     this.chatGptHtmlSplitChunks = this.splitStringToChunks(res.html, maxLength, text)
+                    this.chatGptHtmlTotalChunks = this.chatGptHtmlSplitChunks.length;
+                    console.log('this.chatGptHtmlTotalChunks', this.chatGptHtmlTotalChunks)
                     if (this.chatGptHtmlSplitChunks.length) {
                         const item = this.chatGptHtmlSplitChunks[0];
                         const fullText = item.before_text + item.text + item.after_text;
                         const message = 'please be patient while we are working on full page ' + item.before_text.replaceAll('\n', '');
-                        if (this.chatGptHtmlSplitResults.length > 1) {
-                            this.chatGptHtmlSplitResults.push(item.before_text);
+                        if (this.chatGptHtmlSplitChunks.length > 1) {
+                            // this.chatGptHtmlSplitResults.push(item.before_text);
                         }
                         this.chatGptHtmlSplitChunks.shift();
                         this.chatProcessPromptChunks(message, fullText)
                     } else {
-                        this.chatRequestInProgress = false;
+                        this.chatGptRequestInProgress = false;
+                        this.chatGptRequestError = false;
                         this.forceBindChanges();
                     }
                 });
@@ -306,7 +378,7 @@ export class MainComponent implements OnInit, OnDestroy {
             // this.resetModelResults();
             this.chatProcessPrompt(text)
             // this.apiService.getAnswer(text).subscribe(async (res: any) => {
-            //     this.sentQuestion = false;
+            //     this.sentQuestionToChat = false;
             //     if (res && res.data) {
             //         this.limitAnswers()
             //         this.chat[this.chat.length - 1].text = res.data.answer;
@@ -332,11 +404,19 @@ export class MainComponent implements OnInit, OnDestroy {
         })
     }
 
+    preventTextAreaEnter(e: any) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+        }
+    }
+
     promptFromInput(text: string) {
-        if (this.chatRequestInProgress) {
+        if (this.chatGptRequestInProgress) {
             return;
         }
-        this.chatRequestInProgress = true;
+        this.chatGptRequestInProgress = true;
+        this.chatGptRequestError = false;
+        this.sendChatAnalytics(text, 'manual-prompt')
         this.chatProcessPrompt(text)
     }
 
@@ -345,8 +425,8 @@ export class MainComponent implements OnInit, OnDestroy {
             this.chat.push({text: text})
             this.chat.push({text: ''})
         }
-        this.sentQuestion = true;
-        this.gotFirstAnswer = false;
+        this.sentQuestionToChat = true;
+        this.gotFirstAnswerFromChat = false;
         if(collect_user_prompts) {
             this.apiService.collectUserPrompt(text_to_send).subscribe((res) => {}, (err) => {});
         }
@@ -364,8 +444,8 @@ export class MainComponent implements OnInit, OnDestroy {
     chatProcessPrompt(text: string) {
         this.chat.push({text:text})
         this.chat.push({text:''})
-        this.sentQuestion = true;
-        this.gotFirstAnswer = false;
+        this.sentQuestionToChat = true;
+        this.gotFirstAnswerFromChat = false;
         this.apiService.collectUserPrompt(text).subscribe((res) => {}, (err) => {});
         this.chatPrompt = '';
         this.chatExpend = false;
@@ -382,7 +462,7 @@ export class MainComponent implements OnInit, OnDestroy {
         const answers: any = [];
         this.chatPrompt = '';
         this.apiService.getAnswerStreaming(text).subscribe((event: any) => {
-            if (this.sentQuestion) {
+            if (this.sentQuestionToChat) {
                 this.limitAnswers()
             }
             if (event.type === HttpEventType.DownloadProgress) {
@@ -390,15 +470,16 @@ export class MainComponent implements OnInit, OnDestroy {
                 console.log('partialText', partialText)
                 answers.push(partialText);
                 this.chat[this.chat.length - 1].text =  partialText;
-                this.sentQuestion = false;
+                this.sentQuestionToChat = false;
             }
             if (event.type === HttpEventType.Response) {
                 const body = event.body;
                 console.log('body', body)
                 answers.push(body);
                 this.chromeExtensionService.showSidebar('getAnswerListener 2');
-                this.chatRequestInProgress = false;
-                this.sentQuestion = false;
+                this.chatGptRequestInProgress = false;
+                this.chatGptRequestError = false;
+                this.sentQuestionToChat = false;
             }
             // console.log('answers', answers)
             // if (!answers.length) {
@@ -418,8 +499,8 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     fileUploadProcessPromptChunks(text_to_send: string, collect_user_upload_request = false) {
-        this.sentQuestion = true;
-        this.gotFirstAnswer = false;
+        this.sentQuestionToChat = true;
+        this.gotFirstAnswerFromChat = false;
         if(collect_user_upload_request) {
             // this.apiService.collectUserPrompt(text_to_send).subscribe((res) => {}, (err) => {});
         }
@@ -528,20 +609,25 @@ export class MainComponent implements OnInit, OnDestroy {
         console.log('arr before inner split', arr)
         arr = arr.concat(inner_split);
         console.log('arr before after split', arr)
-        const before_text_length = (before_text + ':\n').length;
+        const before_text_length = (before_text).length;
+        const after_text = '';
+        const after_text_length = (after_text).length;
         for (let obj of arr) {
-            if (out.length && out[out.length - 1].text.length + obj.text.length + obj.splitter.length + before_text_length < size ) {
+            if (out.length && out[out.length - 1].text.length + obj.text.length + obj.splitter.length + before_text_length + after_text_length < size ) {
                 out[out.length - 1].text += obj.text + obj.splitter;
             } else {
                 // const before_text = "FYI, no response necessary, No need to respond, just wanted to let you know: \n"
-                out.push({before_text: before_text, text: obj.text, after_text: ''});
+                out.push({before_text: before_text, text: obj.text, after_text: after_text});
             }
         }
         // out[out.length - 1].after_text = '\n' + after_text + ', All Above text.';
         // out[out.length - 1].before_text = '';
 
         // out.push({before_text: '', text: after_text + ' Above ' + out.length + ' Outputs As One.', after_text: ''});
-        // out.push({before_text: '', text: 'can you combine all answers into one answer?', after_text: ''});
+        if (out.length > 1) {
+            const clean_before_text = before_text.replace(/:/g, '').replace(/\n/g, '');
+            out.push({before_text: '', text: 'combine the ' + clean_before_text + ' sections to get a fully detailed ' + clean_before_text, after_text: ''});
+        }
         console.log('splitStringToChunks out', out)
         return out;
     }
@@ -552,32 +638,54 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     scrollToBottom() {
+        this.addChatScrollListener();
         // console.log('scrollToBottom')
         // if (!this.scrollInProgress) {
         // console.log('scrollToBottom2')
-        this.scrollInProgress = true;
-        if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
-            // console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
-            $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
-                this.scrollInProgress = false;
-            });
-        } else {
-            // window.scrollTo(0, document.body.scrollHeight);
+        if (this.chatAutoScrollEnabled) {
+            this.scrollInProgress = true;
+            if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
+                // console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
+                $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
+                    this.scrollInProgress = false;
+                });
+            } else {
+                // window.scrollTo(0, document.body.scrollHeight);
+            }
         }
         // }
     }
 
+    addChatScrollListener() {
+        this.removeChatScrollListener();
+        this.chatResultsScroll.nativeElement.addEventListener('scroll', this.chatGptScrollListener)
+    }
+    removeChatScrollListener() {
+        this.chatResultsScroll.nativeElement.removeEventListener('scroll', this.chatGptScrollListener)
+    }
+
     fileResultsScrollToBottom() {
+        this.addFileScrollListener();
         // console.log('fileResultsScrollToBottom')
-        this.fileUploadScrollInProgress = true;
-        if (this.fileUploadResultsScroll && this.fileUploadResultsScroll.nativeElement) {
-            // console.log('this.fileUploadResultsScroll.nativeElement.scrollHeight', this.fileUploadResultsScroll.nativeElement.scrollHeight)
-            $(this.fileUploadResultsScroll.nativeElement).stop().animate({scrollTop: this.fileUploadResultsScroll.nativeElement.scrollHeight}, 300, () => {
-                this.fileUploadScrollInProgress = false;
-            });
-        } else {
-            // window.scrollTo(0, document.body.scrollHeight);
+        if (this.fileAutoScrollEnabled) {
+            this.fileUploadScrollInProgress = true;
+            if (this.fileUploadResultsScroll && this.fileUploadResultsScroll.nativeElement) {
+                // console.log('this.fileUploadResultsScroll.nativeElement.scrollHeight', this.fileUploadResultsScroll.nativeElement.scrollHeight)
+                $(this.fileUploadResultsScroll.nativeElement).stop().animate({scrollTop: this.fileUploadResultsScroll.nativeElement.scrollHeight}, 300, () => {
+                    this.fileUploadScrollInProgress = false;
+                });
+            } else {
+                // window.scrollTo(0, document.body.scrollHeight);
+            }
         }
+    }
+
+    addFileScrollListener() {
+        this.removeFileScrollListener();
+        this.fileUploadResultsScroll.nativeElement.addEventListener('scroll', this.fileScrollListener)
+    }
+    removeFileScrollListener() {
+        this.fileUploadResultsScroll.nativeElement.removeEventListener('scroll', this.fileScrollListener)
     }
 
 
@@ -604,7 +712,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.fileText = '';
         this.fileName = '';
         this.fileTask = '';
-        this.fileUploadResults = '';
+        // this.fileUploadResults = '';
     }
 
     uploadFiles(event: Event) {
@@ -613,11 +721,15 @@ export class MainComponent implements OnInit, OnDestroy {
         this.resetFileValues();
         const file = files[0]
         this.fileName = file.name;
-        // console.log('type', file.name);
+        // console.log('type', file.type);
+        this.fileType = file.type;
         if (file.type === 'text/plain') {
             this.readFile(event, file)
+        } else if (file.type === 'application/pdf') {
+            // console.log('type', file.type);
+            this.readPdfFile(event, file)
         } else {
-            this.fileUploadErr = 'please upload txt file only';
+            this.fileUploadErr = 'please upload txt/pdf file only';
         }
     }
 
@@ -626,29 +738,16 @@ export class MainComponent implements OnInit, OnDestroy {
         const file = files[0]
         this.fileName = file.name;
         // console.log('type', file.name);
+        this.fileType = file.type;
         if (file.type === 'text/plain') {
             this.readFile(null, file)
+        } else if (file.type === 'application/pdf') {
+            this.readPdfFile(null, file)
         } else {
-            this.fileUploadErr = 'please upload txt file only';
+            this.fileUploadErr = 'please upload txt/pdf file only';
         }
     }
 
-
-    fileChanged(e: any) {
-        this.fileUploadErr = '';
-        if (e.target.files && e.target.files.length) {
-            this.fileText = ''
-            this.fileName = ''
-            const file = e.target.files[0];
-            this.fileName = file.name;
-            console.log('type', file.name);
-            if (file.type === 'text/plain') {
-                this.readFile(e, file)
-            } else {
-                this.fileUploadErr = 'please upload txt file only';
-            }
-        }
-    }
     readFile(event: any,file: File) {
         let fileReader = new FileReader();
         fileReader.onload = (e) => {
@@ -659,17 +758,65 @@ export class MainComponent implements OnInit, OnDestroy {
                 // if (text.length > this.chatMaxLength) {
                 //     this.fileUploadErr = 'currently we support max text length of ' + this.chatMaxLength;
                 // } else {
-                    this.fileText = fileReader.result.toString();
-                    this.fileUploadErr = '';
-                    this.uploadPromptExpend = true;
+                this.fileText = fileReader.result.toString();
+                this.fileUploadErr = '';
+                this.uploadPromptExpend = true;
                 // }
                 if (event && event.target) {
                     event.target.value = '';
                 }
+            } else {
+                this.fileUploadErr = 'no file content';
             }
 
         }
         fileReader.readAsText(file);
+    }
+
+    readPdfFile(event: any,file: File) {
+        this.fileLoading = true;
+        let fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            // console.log('fileReader.result', fileReader.result)
+            // console.log(fileReader.result);
+            if (fileReader.result) {
+                // @ts-ignore
+                var typedarray = new Uint8Array(fileReader.result);
+                //Step 5:pdfjs should be able to read this
+                pdfjsLib.GlobalWorkerOptions.workerSrc = "assets/pdf.worker.min.js";
+                const loadingTask = pdfjsLib.getDocument(typedarray);
+                loadingTask.promise.then((pdf: any) => {
+                    var maxPages = pdf.numPages;
+                    var countPromises = []; // collecting all page promises
+                    for (var j = 1; j <= maxPages; j++) {
+                        var page = pdf.getPage(j);
+
+                        countPromises.push(page.then(function(page: any) { // add page promise
+                            var textContent = page.getTextContent();
+                            return textContent.then(function(text: any){ // return content promise
+                                return text.items.map(function (s: any) { return s.str; }).join(' '); // value page text
+                            });
+                        }));
+                    }
+                    // Wait for all pages and join text
+                    return Promise.all(countPromises).then((texts) => {
+                        this.fileText = texts.join('');
+                        // console.log('this.fileText', this.fileText)
+                        this.fileLoading = false;
+                        return texts.join(' ');
+                    }).catch((err) => {
+                        this.fileUploadErr = err.stack;
+                    });
+                });
+                if (event && event.target) {
+                    event.target.value = '';
+                }
+            } else {
+                this.fileUploadErr = 'no file content';
+            }
+
+        }
+        fileReader.readAsArrayBuffer(file);
     }
 
     submitFileUpload() {
@@ -681,7 +828,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.fileSubmitErr = 'please select task';
             return;
         }
-        if (this.chatRequestInProgress) {
+        if (this.chatGptRequestInProgress) {
             this.fileSubmitErr = 'please wait while current task finish';
             return;
         }
@@ -689,22 +836,31 @@ export class MainComponent implements OnInit, OnDestroy {
         //     this.fileSubmitErr = 'currently we support max text length of ' + this.chatMaxLength;
         //     return;
         // }
-        this.chatRequestInProgress = true;
+        this.sendFileSubmitAnalytics();
+        this.chatGptRequestInProgress = true;
         this.fileSubmitInProgress = true;
+        this.fileAutoScrollEnabled = true;
+        this.chatGptRequestError = false;
         this.fileSubmitErr = '';
+        this.fileUploadResults = '';
+        this.resetFileUploadLastConversation();
+
         let maxLength = this.chatMaxLength;
         if (this.isHebText(this.fileText)) {
             maxLength = this.chatMaxLengthHe;
         }
-        this.fileUploadGptHtmlSplitChunks = [];
-        this.fileUploadGptHtmlSplitChunks = this.splitStringToChunks(this.fileText, maxLength, this.fileTask)
+        this.resetFileUploadChunksData();
+        this.fileUploadGptHtmlProgress = 0;
+        const before_text = this.fileTask + ':\n';
+        this.fileUploadGptHtmlSplitChunks = this.splitStringToChunks(this.fileText, maxLength, before_text)
+        this.fileUploadGptHtmlTotalChunks = this.fileUploadGptHtmlSplitChunks.length;
         if (this.fileUploadGptHtmlSplitChunks.length) {
             const item = this.fileUploadGptHtmlSplitChunks[0];
-            const fullText = item.before_text + ':\n' + item.text + item.after_text;
+            const fullText = item.before_text + item.text + item.after_text;
             const message = 'please be patient while we are working on your file';
             this.fileUploadResults = message;
             if (this.fileUploadGptHtmlSplitChunks.length > 1) {
-                this.fileUploadGptHtmlSplitResults.push(item.before_text);
+                // this.fileUploadGptHtmlSplitResults.push(item.before_text);
             }
             this.fileUploadGptHtmlSplitChunks.shift();
             this.fileUploadProcessPromptChunks(fullText)
@@ -766,8 +922,9 @@ export class MainComponent implements OnInit, OnDestroy {
             this.chromeExtensionService.refreshGptToken();
         }
         this.chatGptNeedToRefreshToken = false;
+        this.chatGptCurrentMessage = msg;
         console.log('sending msg from file upload ', msg.length)
-        this.chromeExtensionService.sendMessageToChatGpt(msg, '', this.chatGptLastMessageId);
+        this.chromeExtensionService.sendMessageToChatGpt(msg, this.fileChatGptConversationId, this.fileChatGptLastMessageId);
     }
 
     ListenToChatGpt() {
@@ -799,196 +956,204 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chromeExtensionService.ListenFor('chatGptRequest').subscribe((res) => {
             console.log('ListenToChatGpt res.answer', res.answer)
             if (res.answer && res.answer.done) {
-                console.log('res.answer.done', res.answer.done)
+                // console.log('res.answer.done', res.answer.done)
                 if (this.fileSubmitInProgress) {
-                    console.log('this.fileUploadGptHtmlSplitChunks', this.fileUploadGptHtmlSplitChunks)
-                    console.log('this.fileUploadGptHtmlSplitResults', this.fileUploadGptHtmlSplitResults)
-                    if (this.fileUploadGptHtmlSplitChunks.length) {
-                        this.fileUploadGptHtmlSplitResults.push(this.chatGptCurrentResult)
-                        const item = this.fileUploadGptHtmlSplitChunks[0];
-                        const fullText = item.before_text + ':\n' + item.text + item.after_text;
-                        this.fileUploadGptHtmlSplitChunks.shift();
-                        this.fileUploadProcessPromptChunks(fullText)
-                    } else if (this.fileUploadGptHtmlSplitResults.length) {
-                        const final_text = this.fileUploadGptHtmlSplitResults.join('\n')
-                        this.fileUploadGptHtmlSplitResults = [];
-                        this.fileUploadProcessPromptChunks(final_text, true)
-                    } else {
-                        this.fileSubmitInProgress = false;
-                        this.chatRequestInProgress = false;
-                        this.uploadPromptResultsExpend = true;
-                        this.forceBindChanges();
-                    }
+                    this.handleDoneChatGptFileChunkRequest();
                 } else {
-                    this.resetItems();
-                    console.log('this.chatGptHtmlSplitChunks', this.chatGptHtmlSplitChunks)
-                    console.log('this.chatGptHtmlSplitResults', this.chatGptHtmlSplitResults)
-                    if (this.chatGptHtmlSplitChunks.length) {
-                        this.chatGptHtmlSplitResults.push(this.chatGptCurrentResult)
-                        const item = this.chatGptHtmlSplitChunks[0];
-                        console.log('item', item)
-                        const fullText = item.before_text + item.text + item.after_text;
-                        console.log('fullText.length', fullText.length)
-                        this.chatGptHtmlSplitChunks.shift();
-                        this.chatProcessPromptChunks('', fullText)
-                    } else if (this.chatGptHtmlSplitResults.length) {
-                        const final_text = this.chatGptHtmlSplitResults.join('\n')
-                        this.chatGptHtmlSplitResults = [];
-                        console.log('final_text', final_text)
-                        console.log('final_text.length', final_text.length)
-                        this.chatProcessPromptChunks('', final_text, true)
-                    } else {
-                        const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
-                        this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
-                    }
-                }
-
-                return;
-            }
-            if (res.answer) {
-                if (res.answer.err) {
-                    if (this.fileSubmitInProgress) {
-                        this.fileUploadResults = res.answer.errMessage;
-                        this.fileSubmitInProgress = false;
-                        this.chatRequestInProgress = false;
-                        if (res.answer.errMessage === 'Unauthorized') {
-                            this.chatGptNeedToRefreshToken = true;
-                        }
-                    } else {
-                        console.log('ListenToChatGpt msg', res)
-                        this.changePage('chat');
-                        this.resetItems(res.answer.errMessage);
-                        if (res.answer.errMessage === 'Unauthorized') {
-                            this.chatGptNeedToRefreshToken = true;
-                        }
-                    }
-                    return
-                } else if (res.answer.text !== this.chatGptCurrentMessage) {
-                    if (this.fileSubmitInProgress) {
-                        this.chatGptCurrentResult = res.answer.text;
-                        if (!this.fileUploadGptHtmlSplitChunks.length && !this.fileUploadGptHtmlSplitResults.length) {
-                            this.fileUploadResults = this.chatGptCurrentResult;
-                            this.fileResultsScrollToBottom();
-                        }
-                    } else {
-                        let conversation_id = '';
-                        let message_id = '';
-                        if (res.answer.data) {
-                            conversation_id = res.answer.data.conversation_id;
-                            message_id = res.answer.data.message.id;
-                        }
-                        // console.log('ListenToChatGpt conversation_id', conversation_id)
-                        // console.log('ListenToChatGpt message_id', message_id)
-                        if (conversation_id) {
-                            this.chatGptConversationId = conversation_id;
-                        }
-                        if (message_id) {
-                            this.chatGptLastMessageId = message_id;
-                        }
-                        this.chatGptCurrentResult = res.answer.text;
-                        if (!this.gotFirstAnswer) {
-                            this.chatPrompt = '';
-                            this.gotFirstAnswer = true;
-                        }
-                        if (!this.chatGptHtmlSplitChunks.length && !this.chatGptHtmlSplitResults.length) {
-                            this.chat[this.chat.length - 1].text = this.chatGptCurrentResult;
-                            this.sentQuestion = false
-                        }
-                        // this.chatGptCurrentMessage = '';
-                        this.scrollToBottom();
-                    }
-                } else {
-                    console.log('ListenToChatGpt something went wrong res.answer', res)
-                    // this.resetItems('something went wrong res.answer');
-                    return;
+                    this.handleDoneChatGptChunkRequest();
                 }
                 this.forceBindChanges();
-
-                // if (res.answer.toManyRequests) {
-                //     if (this.fileSubmitInProgress) {
-                //         this.fileUploadResults = res.answer.text;
-                //         this.fileSubmitInProgress = false;
-                //         this.chatRequestInProgress = false
-                //     } else {
-                //         console.log('ListenToChatGpt toManyRequests msg', res)
-                //         this.changePage('chat');
-                //         this.resetItems(res.answer.text);
-                //     }
-                //     return
-                // } else if (res.answer.messageLength) {
-                //     if (this.fileSubmitInProgress) {
-                //         this.fileUploadResults = res.answer.text;
-                //         this.fileSubmitInProgress = false;
-                //         this.chatRequestInProgress = false
-                //     } else {
-                //         console.log('ListenToChatGpt messageLength msg', res)
-                //         this.changePage('chat');
-                //         this.resetItems(res.answer.text);
-                //     }
-                //     return
-                // } else if (res.answer.text === 'Unauthorized') {
-                //     if (this.fileSubmitInProgress) {
-                //         // this.fileUploadResults = res.answer.text;
-                //         this.fileSubmitInProgress = false;
-                //         this.chatRequestInProgress = false
-                //         this.chatGptNeedToRefreshToken = true;
-                //     } else {
-                //         console.log('ListenToChatGpt Unauthorized msg', res)
-                //         this.changePage('chat');
-                //         this.chatGptNeedToRefreshToken = true;
-                //         if (res.answer.detail) {
-                //             this.resetItems(res.answer.detail);
-                //         } else {
-                //             this.resetItems(res.answer.text);
-                //         }
-                //     }
-                //     return
-                // } else if (res.answer.text !== this.chatGptCurrentMessage) {
-                //     if (this.fileSubmitInProgress) {
-                //         this.chatGptCurrentResult = res.answer.text;
-                //         if (!this.fileUploadGptHtmlSplitChunks.length && !this.fileUploadGptHtmlSplitResults.length) {
-                //             this.fileUploadResults = this.chatGptCurrentResult;
-                //             this.fileResultsScrollToBottom();
-                //         }
-                //     } else {
-                //         let conversation_id = '';
-                //         let message_id = '';
-                //         if (res.answer.data) {
-                //             conversation_id = res.answer.data.conversation_id;
-                //             message_id = res.answer.data.message.id;
-                //         }
-                //         // console.log('ListenToChatGpt conversation_id', conversation_id)
-                //         // console.log('ListenToChatGpt message_id', message_id)
-                //         if (conversation_id) {
-                //             this.chatGptConversationId = conversation_id;
-                //         }
-                //         if (message_id) {
-                //             this.chatGptLastMessageId = message_id;
-                //         }
-                //         this.chatGptCurrentResult = res.answer.text;
-                //         if (!this.gotFirstAnswer) {
-                //             this.chatPrompt = '';
-                //             this.gotFirstAnswer = true;
-                //         }
-                //         if (!this.chatGptHtmlSplitChunks.length && !this.chatGptHtmlSplitResults.length) {
-                //             this.chat[this.chat.length - 1].text = this.chatGptCurrentResult;
-                //             this.sentQuestion = false
-                //         }
-                //         // this.chatGptCurrentMessage = '';
-                //         this.scrollToBottom();
-                //     }
-                // } else {
-                //     console.log('ListenToChatGpt something went wrong res.answer', res)
-                //     // this.resetItems('something went wrong res.answer');
-                //     return;
-                // }
-                // this.forceBindChanges();
+                return;
+            }
+            else if (res.answer) {
+                this.handleChatGptResponse(res);
             } else {
                 console.log('ListenToChatGpt something went wrong msg', res)
                 this.resetItems('something went wrong');
                 this.forceBindChanges();
             }
         })
+    }
+
+    handleChatGptResponse(res: any) {
+        if (res.answer.err) {
+            this.handleOnErrorChatGptResponse(res);
+        } else if (res.answer.text.trim() !== this.chatGptCurrentMessage.trim()) {
+            this.handleOnSuccessChatGptResponse(res);
+        } else {
+            console.log('ListenToChatGpt something went wrong res.answer', res)
+            // this.resetItems('something went wrong res.answer');
+            // return;
+        }
+        this.forceBindChanges();
+    }
+
+    handleOnErrorChatGptResponse(res: any) {
+        if (this.fileSubmitInProgress) {
+            this.fileUploadResults = res.answer.errMessage;
+            this.fileSubmitInProgress = false;
+            this.chatGptRequestInProgress = false;
+            this.chatGptRequestError = true;
+            this.resetFileUploadChunksData();
+            if (res.answer.errMessage === 'Unauthorized') {
+                this.chatGptNeedToRefreshToken = true;
+            }
+        } else {
+            console.log('ListenToChatGpt msg', res)
+            this.changePage('chat');
+            this.resetItems(res.answer.errMessage);
+            this.chatGptRequestError = true;
+            if (res.answer.errMessage === 'Unauthorized') {
+                this.chatGptNeedToRefreshToken = true;
+            }
+        }
+    }
+
+    handleOnSuccessChatGptResponse(res: any) {
+        if (this.fileSubmitInProgress) {
+            this.chatGptCurrentResult = res.answer.text;
+            let conversation_id = '';
+            let message_id = '';
+            if (res.answer.data) {
+                conversation_id = res.answer.data.conversation_id;
+                message_id = res.answer.data.message.id;
+            }
+            if (conversation_id) {
+                this.fileChatGptConversationId = conversation_id;
+            }
+            if (message_id) {
+                this.fileChatGptLastMessageId = message_id;
+            }
+            if (!this.fileUploadGptHtmlSplitChunks.length && !this.fileUploadGptHtmlSplitResults.length) {
+                this.fileUploadResults = this.chatGptCurrentResult;
+                this.fileResultsScrollToBottom();
+            }
+        } else {
+            if (this.chat[this.chat.length - 1].text !== undefined) {
+                let conversation_id = '';
+                let message_id = '';
+                if (res.answer.data) {
+                    conversation_id = res.answer.data.conversation_id;
+                    message_id = res.answer.data.message.id;
+                }
+                // console.log('ListenToChatGpt conversation_id', conversation_id)
+                // console.log('ListenToChatGpt message_id', message_id)
+                if (conversation_id) {
+                    this.chatGptConversationId = conversation_id;
+                }
+                if (message_id) {
+                    this.chatGptLastMessageId = message_id;
+                }
+                this.chatGptCurrentResult = res.answer.text;
+                if (!this.gotFirstAnswerFromChat) {
+                    // this.chatPrompt = '';
+                    this.gotFirstAnswerFromChat = true;
+                }
+                if (!this.chatGptHtmlSplitChunks.length && !this.chatGptHtmlSplitResults.length) {
+                    this.chat[this.chat.length - 1].text = this.chatGptCurrentResult;
+                    this.sentQuestionToChat = false
+                }
+                // this.chatGptCurrentMessage = '';
+                this.scrollToBottom();
+            }
+        }
+    }
+
+    resetChatLastConversation() {
+        this.chatGptLastMessageId = ''
+        this.chatGptConversationId = ''
+    }
+
+    resetFileUploadLastConversation() {
+        this.fileChatGptLastMessageId = ''
+        this.fileChatGptConversationId = ''
+    }
+
+    resetFileUploadChunksData() {
+        this.fileUploadGptHtmlSplitChunks = [];
+        this.fileUploadGptHtmlTotalChunks = -1;
+        this.fileUploadGptHtmlProgress = -1;
+    }
+
+    handleDoneChatGptChunkRequest() {
+        console.log('this.chatGptHtmlSplitChunks', this.chatGptHtmlSplitChunks)
+        console.log('this.chatGptHtmlSplitResults', this.chatGptHtmlSplitResults)
+        let result_length = 0
+        if (this.chatGptHtmlSplitResults.length) {
+            // result_length = 1;
+        }
+        if (this.chatGptHtmlProgress > -1) {
+            this.chatGptHtmlProgress = 100 - Math.ceil(this.chatGptHtmlSplitChunks.length / (this.chatGptHtmlTotalChunks + result_length) * 100);
+        }
+        console.log('this.chatGptHtmlProgress', this.chatGptHtmlProgress)
+
+        this.resetItems();
+        if (this.chatGptHtmlSplitChunks.length) {
+            // this.chatGptHtmlSplitResults.push(this.chatGptCurrentResult)
+            const item = this.chatGptHtmlSplitChunks[0];
+            console.log('item', item)
+            const fullText = item.before_text + item.text + item.after_text;
+            console.log('fullText.length', fullText.length)
+            this.chatGptHtmlSplitChunks.shift();
+            setTimeout(() => {
+                this.chatProcessPromptChunks('', fullText)
+            }, 1000)
+        } else if (this.chatGptHtmlSplitResults.length) {
+            // const final_text = this.chatGptHtmlSplitResults.join('\n')
+            // this.chatGptHtmlSplitResults = [];
+            // console.log('final_text', final_text)
+            // console.log('final_text.length', final_text.length)
+            // const t = 'combine the summarized sections to get a fully detailed summary';
+            // this.chatProcessPromptChunks('', t, true)
+        } else {
+            if (this.chatGptHtmlProgress > -1) {
+                this.chatGptHtmlProgress = 100;
+            }
+            const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
+            this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
+            this.removeChatScrollListener();
+            setTimeout(() => {
+                this.chatGptHtmlProgress = -1;
+                this.chatGptHtmlTotalChunks = -1;
+            })
+        }
+    }
+
+    handleDoneChatGptFileChunkRequest() {
+        console.log('this.fileUploadGptHtmlSplitChunks', this.fileUploadGptHtmlSplitChunks)
+        console.log('this.fileUploadGptHtmlSplitResults', this.fileUploadGptHtmlSplitResults)
+        let result_length = 0
+        if (this.fileUploadGptHtmlSplitResults.length) {
+            // result_length = 1;
+        }
+        this.fileUploadGptHtmlProgress = 100 - Math.ceil(this.fileUploadGptHtmlSplitChunks.length / (this.fileUploadGptHtmlTotalChunks + result_length) * 100);
+        if (this.fileUploadGptHtmlSplitChunks.length) {
+            // this.fileUploadGptHtmlSplitResults.push(this.chatGptCurrentResult)
+            const item = this.fileUploadGptHtmlSplitChunks[0];
+            const fullText = item.before_text + item.text + item.after_text;
+            this.fileUploadGptHtmlSplitChunks.shift();
+            setTimeout(() => {
+                this.fileUploadProcessPromptChunks(fullText)
+            }, 1000);
+        } else if (this.fileUploadGptHtmlSplitResults.length) {
+            // const final_text = this.fileUploadGptHtmlSplitResults.join('\n')
+            // this.fileUploadGptHtmlSplitResults = [];
+            // this.fileUploadProcessPromptChunks(final_text, true)
+        } else {
+            this.chatGptHtmlProgress = 100;
+            const msg = this.chromeExtensionService.genTitleMessage(this.fileChatGptConversationId, this.fileChatGptLastMessageId);
+            this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
+            this.fileSubmitInProgress = false;
+            this.chatGptRequestInProgress = false;
+            this.chatGptRequestError = false;
+            this.uploadPromptResultsExpend = true;
+            this.removeFileScrollListener();
+            this.forceBindChanges();
+            setTimeout(() => {
+                this.fileUploadGptHtmlProgress = -1;
+                this.fileUploadGptHtmlTotalChunks = -1;
+            })
+        }
     }
 
     toggleChatOptions() {
@@ -1012,8 +1177,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
     resetItems(text: string = '') {
         this.chatGptCurrentMessage = '';
-        this.chatRequestInProgress = false;
-        this.sentQuestion = false;
+        this.chatGptRequestInProgress = false;
+        this.sentQuestionToChat = false;
+        // this.chatGptHtmlTotalChunks = -1;
+        // this.chatGptHtmlProgress = -1;
         if (text) {
             this.chat[this.chat.length - 1].text = text;
         }
@@ -1037,6 +1204,23 @@ export class MainComponent implements OnInit, OnDestroy {
         } else {
             return false;
         }
+    }
+
+    sendChatAnalytics(text: string, type: string) {
+        this.chromeExtensionService.sendAnalytics('chat', type, {
+            user_email: this.config.user?.email,
+            server_url: this.config.server_url,
+            text: text.substring(0, 100)
+        });
+    }
+    sendFileSubmitAnalytics() {
+        this.chromeExtensionService.sendAnalytics('file-submit', 'submit-file-upload', {
+            user_email: this.config.user?.email,
+            task: this.fileTask,
+            file_type: this.fileType,
+            file_name: this.fileName,
+            file_text: this.fileText.substring(0, 100)
+        });
     }
 
     ngOnDestroy(): void {

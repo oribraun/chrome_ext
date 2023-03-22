@@ -28,6 +28,19 @@ class ChatGPTClient {
         })
     }
 
+    generalResponse() {
+        const response = {
+            err: 0,
+            errMessage: '',
+            status: 0,
+            text: '',
+            data: {},
+            toManyRequests: false,
+            messageLength: false
+        }
+        return response;
+    }
+
     getTokenFromStorage = () => {
         return new Promise((resolve, reject) => {
             chrome.storage.local
@@ -83,26 +96,39 @@ class ChatGPTClient {
     generateChatGPTReponse = async (payload, cb) => {
         let retryCount = 0, requestCount = 0;
 
-        let { models, statusCode } = await this.getModels(this.accessToken);
-
-        if (statusCode === 401 || statusCode === 403) {
-            // await this.openChatGPT();
-            // go to chatGpt to login
-            models = await (await this.getModels(this.accessToken)).models;
-        }
-
-        const maxRequestCount = models.length < 5 ? 5 : models.length;
+        let models = [];
+        const response = this.generalResponse();
+        // const resp = await this.getModels(this.accessToken);
+        // if (resp.status !== 200) {
+        //     response.err = 1;
+        //     let resJson;
+        //     try {
+        //         resJson = await resp.json();
+        //     } catch (e){}
+        //     response.data = resJson;
+        //     if (resp.status === 401 || resp.status === 403) {
+        //         response.errMessage = "Unauthorized";
+        //     } else if (resp.status === 429) {
+        //         response.errMessage = resJson?.detail;
+        //         response.toManyRequests = true;
+        //     } else if (resp.status === 413) {
+        //         response.errMessage = resJson?.detail?.message;
+        //         response.messageLength = true;
+        //     } else {
+        //         response.errMessage = resJson?.detail || "something went wrong";
+        //     }
+        //     // sendAnalytics({ event: "error", type: resp.status, response: response });
+        //     return cb(response);
+        // } else {
+        //     const resJson = await resp.json();
+        //     models = resJson?.models
+        // }
+        //
+        // const maxRequestCount = models.length < 5 ? 5 : models.length;
+        //
+        const maxRequestCount = 5;
 
         const sendRequestToChatGPT = async () => {
-            const response = {
-                err: 0,
-                errMessage: '',
-                status: 0,
-                text: '',
-                data: {},
-                toManyRequests: false,
-                messageLength: false
-            }
             if (requestCount > maxRequestCount) {
                 response.err = 1;
                 response.errMessage = "Unauthorized"
@@ -116,7 +142,8 @@ class ChatGPTClient {
                     Authorization: `Bearer ${this.accessToken}`,
                 },
                 body: JSON.stringify({
-                    ...payload, model: models[retryCount]?.slug ?? payload.model
+                    ...payload,
+                    model: models[retryCount]?.slug ?? payload.model
                 }),
             });
             requestCount++;
@@ -137,9 +164,9 @@ class ChatGPTClient {
                     response.errMessage = resJson?.detail?.message;
                     response.messageLength = true;
                 } else {
-                    response.errMessage = resJson?.detail
+                    response.errMessage = resJson?.detail || "something went wrong";
                 }
-                sendAnalytics({ event: "error", type: resp.status, response: response });
+                sendAnalytics({ event: "chat-gpt-error", type: resp.status, obj: response });
                 return cb(response);
             }
 
@@ -242,11 +269,11 @@ class ChatGPTClient {
                 Authorization: `Bearer ${accessToken}`
             },
         });
-
-        if (resp.status === 401 || resp.status === 403) return { models: [], statusCode: resp.status };
-
-        const resJson = await resp.json();
-        return { models: resJson?.models ?? [], statusCode: resp.status };
+        return resp;
+        // if (resp.status === 401 || resp.status === 403) return { models: [], statusCode: resp.status };
+        //
+        // const resJson = await resp.json();
+        // return { models: resJson?.models ?? [], statusCode: resp.status };
     }
 
     getLastConversation = async () => {
@@ -389,18 +416,19 @@ const getUniqueId = async () => {
 function isObject(obj) {
     return obj !== undefined && obj !== null && obj.constructor == Object;
 }
-const sendAnalytics = async (details) => {
+const sendAnalytics = async (obj) => {
 
     const payload = {
-        event: details.event,
+        event: obj.event,
         properties: {
             distinct_id: await getUniqueId(),
             token: "d4af68efc97684ea4e001d1e662c335a",
-            type: details.type,
+            type: obj.type,
+            // data: obj.data,
         }
     };
-    if (details?.data && isObject(details?.data)) {
-        payload.properties = {...payload.properties, ...details?.data}
+    if (obj?.data && isObject(obj?.data)) {
+        payload.properties = {...payload.properties, ...obj?.data}
     }
 
     const resp = await fetch("https://api.mixpanel.com/track/?ip=1&verbose=1", {
@@ -461,6 +489,14 @@ try {
                     if (msg.payload) {
                         chatgpt.generateChatGPTReponse(msg.payload, (answer) => {
                             if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: answer});
+                        }).then(() => {
+
+                        }).catch((err) => {
+                            console.log('network error', err);
+                            const response = chatgpt.generalResponse();
+                            response.err = 1;
+                            response.errMessage = err.stack;
+                            if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: response});
                         });
                     }
                 }
@@ -531,7 +567,7 @@ try {
                 chatgpt.updateAccessToken(msg.token);
                 break;
             case "SEND_ANALYTICS":
-                sendAnalytics(msg.details);
+                sendAnalytics(msg.obj);
                 break;
             default:
                 break;

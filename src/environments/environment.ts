@@ -10,6 +10,7 @@ export const environment = {
     staging: false,
     development: true,
     extension: false,
+    enableLogs: false,
     gaia_company_token: '52a072a8c0d89236e4ed183f948143d845e43099e2e8d2cd16fd6dabd18a',
     serverUrl: 'http://localhost:8000/',
     // google_client_id: '687079247846-3e3hpr04psma738bc7eftq465t8hqoa0.apps.googleusercontent.com'

@@ -55,10 +55,17 @@
         <div class="drop-area" appDragAndDrop (fileDropped)="filesDropped($event)">
             <div class="dashed-area">
                 <div class="header">
-                    You can upload text (txt) files only.
+                    You can upload txt/pdf files only.
                 </div>
                 Drop files here or click to select
                 <input class="file-input" type="file" multiple (change)="uploadFiles($event)">
+            </div>
+        </div>
+        <div class="loader-wrapper" *ngIf="fileLoading">
+            <div class="loader">
+                <div class="spinner-grow">
+                    <span class="sr-only"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -76,9 +83,9 @@
                         <div class="head">
                             <h6 class="text-center" *ngIf="fileText">Uploaded File Preview:</h6>
                         </div>
-                        <div class="option">
+                        <div class="option option-no-margin">
                             <div class="file-text" *ngIf="fileText">
-                                <h6 class="text-center">{{(fileText.length > 100 ? fileText.substring(0, 100) + '...' : fileText)}}</h6>
+                                <h6 class="pre-wrap" [ngClass]="{'text-center': chatGptRequestError}">{{(fileText.length > 100 ? fileText.substring(0, 100) + '...' : fileText)}}</h6>
                             </div>
                         </div>
                     </div>
@@ -118,11 +125,15 @@
                                 <div class="spinner-grow" role="status" *ngIf="fileSubmitInProgress">
                                     <span class="sr-only"></span>
                                 </div>
+                                <div class="progress-bar" *ngIf="fileUploadGptHtmlProgress > -1 && fileSubmitInProgress"
+                                     [title]="fileUploadGptHtmlProgress + '%'"
+                                     [ngStyle]="{'width': fileUploadGptHtmlProgress + '%'}"
+                                ></div>
                             </h6>
                         </div>
-                        <div class="option">
+                        <div class="option option-no-margin">
                             <div class="file-text" *ngIf="fileUploadResults">
-                                <h6 class="text-center">{{fileUploadResults}}</h6>
+                                <h6 class="pre-wrap"[ngClass]="{'text-center': chatGptRequestError}">{{fileUploadResults}}</h6>
                             </div>
                         </div>
                     </div>
@@ -159,6 +170,7 @@
         <!--        <input type="text" class="input form-control" placeholder="Prompt" (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt">-->
         <textarea name="" id="" class="input form-control" placeholder="Prompt"
                   cols="1" rows="1" style="resize: none;"
+                  (keydown)="preventTextAreaEnter($event)"
                   (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt"></textarea>
         <button class="btn btn-outline-secondary" type="button" (click)="promptFromInput(this.chatPrompt)">Send</button>
     </div>
@@ -204,12 +216,16 @@
                         <i *ngIf="!(i % 2)" class="bi bi-person"></i>
                         <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
                     </span>
-                    <span class="prompt" [innerHTML]="item.text"></span>
-                    <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestion">
+                    <span class="prompt pre-wrap" [innerHTML]="item.text"></span>
+                    <div class="spinner-grow" role="status" *ngIf="!item.text && sentQuestionToChat">
                         <span class="sr-only"></span>
                     </div>
+                    <div class="progress-bar" *ngIf="(i % 2) && chatGptHtmlProgress > -1 && !item.text && sentQuestionToChat"
+                         [attr.progress]="chatGptHtmlProgress + '%'"
+                         [ngStyle]="{'width': chatGptHtmlProgress + '%'}"
+                    ></div>
                     <div class="clipboard-wrapper"
-                         *ngIf="(item.text && !(i % 2)) || (item.text && (i % 2) && !chatRequestInProgress)">
+                         *ngIf="(item.text && !(i % 2)) || (item.text && (i % 2) && !chatGptRequestInProgress)">
                         <div class="clipboard">
                             <i class="bi bi-clipboard pointer" (click)="copyText(item.text, i)" *ngIf="copyTextSuccess === -1 || copyTextSuccess !== i"></i>
                             <i class="bi bi-hand-thumbs-up text-success" *ngIf="copyTextSuccess !== -1 && copyTextSuccess === i"></i>
