@@ -10,6 +10,8 @@ class ChatGPTClient {
     chatGptGetConversationUrl = 'https://chat.openai.com/backend-api/conversations?offset=0&limit=20'
     creatingWindow = false;
 
+    accessToken = '';
+
     controller;
 
     constructor() {
@@ -48,13 +50,15 @@ class ChatGPTClient {
             chrome.storage.local
                 .get(this.storageKey)
                 .then((result) => {
-                    this.accessToken = result[this.storageKey];
+                    if (result[this.storageKey]) {
+                        this.accessToken = result[this.storageKey];
+                    }
                     if (this.accessToken) {
                         resolve(1);
                     } else {
                         reject(0);
                     }
-                });
+                }).catch((err) => {});
         });
     }
 
@@ -140,7 +144,7 @@ class ChatGPTClient {
                 return cb(response);
             }
 
-            const resp = await fetch(this.chatGPTApiUrl, {
+            const resp = await fetch("https://chat.openai.com/backend-api/conversation", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -163,12 +167,20 @@ class ChatGPTClient {
                 response.data = resJson;
                 if (resp.status === 401 || resp.status === 403) {
                     response.errMessage = "Unauthorized";
+                    if (this.accessToken) {
+                        this.accessToken = '';
+                    }
                 } else if (resp.status === 429) {
                     response.errMessage = resJson?.detail;
                     response.toManyRequests = true;
                 } else if (resp.status === 413) {
                     response.errMessage = resJson?.detail?.message;
                     response.messageLength = true;
+                } else if (resp.status === 500) {
+                    response.errMessage = "Unauthorized";
+                    if (this.accessToken) {
+                        this.accessToken = '';
+                    }
                 } else {
                     response.errMessage = resJson?.detail || "something went wrong";
                 }
@@ -523,12 +535,12 @@ try {
                 if (msg.type === 'chatGptGenModerations') {
                     chatgpt.generateModerations(msg.conversation_id, msg.input, msg.message_id).then((res) => {
                         if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, moderation_id: res.moderation_id});
-                    });
+                    }).catch((err) => {});
                 }
                 if (msg.type === 'chatGptGenTitle') {
                     chatgpt.generateConversationTitle(msg.conversation_id, msg.message_id, msg.model).then((res) => {
                         if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, title: res.title});
-                    });
+                    }).catch((err) => {});
                 }
                 if (msg.type === 'chatGptRefreshToken') {
                     chatgpt.getTokenFromStorage().then(() => {
@@ -545,6 +557,8 @@ try {
                                     chrome.tabs.sendMessage(parseInt(tab_id), {
                                         type: 'chatGptGotToken',
                                         token: chatgpt.accessToken
+                                    }, () => {
+                                        console.log('chrome.runtime.lastError', chrome.runtime.lastError)
                                     });
                                 }
                             }

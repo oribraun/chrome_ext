@@ -6,7 +6,7 @@ export class tabsManager {
     }
 
     static init() {
-        console.log('init tabs manager')
+        // console.log('init tabs manager')
         chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             this.tabStore[tabId] = tab;
             // console.log('onUpdated tabStore', this.tabStore)

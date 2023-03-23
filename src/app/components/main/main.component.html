@@ -179,7 +179,7 @@
                   cols="1" rows="1" style="resize: none;"
                   (keydown)="preventTextAreaEnter($event)"
                   (keyup.enter)="promptFromInput(this.chatPrompt)" [(ngModel)]="chatPrompt"></textarea>
-        <button class="btn btn-outline-secondary" type="button" (click)="promptFromInput(this.chatPrompt)">Send</button>
+        <button class="button btn btn-outline-secondary" type="button" (click)="promptFromInput(this.chatPrompt)">Send</button>
     </div>
     <div class="results">
         <div class="outer-scroll">

@@ -123,13 +123,13 @@ class GaiaExtension {
             ]
         }).then(() => {
             // console.log("script injected in one frame")
-        });
+        }).catch((err) => {});
         chrome.scripting.insertCSS({
             target: { tabId: tab_id, allFrames: false},
             files: ["extension/scripts/side_menu.css"]
         }).then(() => {
             // console.log("css injected in one frame")
-        });
+        }).catch((err) => {});
     }
 
     injectContentHostScript(tab_id, host) {
@@ -149,7 +149,7 @@ class GaiaExtension {
             });
         }, (err) => {
 
-        })
+        }).catch((err) => {})
     }
     sendHostNameToContentScript(tab_id, host) {
         chrome.tabs.sendMessage(tab_id, {type: 'init-from-background', host: host});
