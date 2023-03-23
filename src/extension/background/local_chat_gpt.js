@@ -10,6 +10,8 @@ class ChatGPTClient {
     chatGptGetConversationUrl = 'https://chat.openai.com/backend-api/conversations?offset=0&limit=20'
     creatingWindow = false;
 
+    controller;
+
     constructor() {
         this.init();
     }
@@ -97,6 +99,9 @@ class ChatGPTClient {
         let retryCount = 0, requestCount = 0;
 
         let models = [];
+
+        this.controller = new AbortController();
+
         const response = this.generalResponse();
         // const resp = await this.getModels(this.accessToken);
         // if (resp.status !== 200) {
@@ -145,6 +150,7 @@ class ChatGPTClient {
                     ...payload,
                     model: models[retryCount]?.slug ?? payload.model
                 }),
+                signal: this.controller.signal
             });
             requestCount++;
             if (resp.status !== 200) {
@@ -224,7 +230,7 @@ class ChatGPTClient {
         };
 
         //call the function
-        await sendRequestToChatGPT();
+        return await sendRequestToChatGPT();
     };
 
     updateAccessToken = (token) => {
@@ -391,6 +397,12 @@ class ChatGPTClient {
             reader.releaseLock();
         }
     }
+
+    cancelStream() {
+        if (this.controller) {
+            this.controller.abort()
+        }
+    }
 }
 
 const uuidv4 = () => {
@@ -495,7 +507,10 @@ try {
                             console.log('network error', err);
                             const response = chatgpt.generalResponse();
                             response.err = 1;
-                            response.errMessage = err.stack;
+                            response.errMessage = err.message;
+                            if (response.errMessage === 'The user aborted a request.') {
+                                response.errMessage = 'Aborted.'
+                            }
                             if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: response});
                         });
                     }
@@ -565,6 +580,10 @@ try {
         switch (msg.type) {
             case "chatGptGotToken":
                 chatgpt.updateAccessToken(msg.token);
+                break;
+            case "chatGptStopStream":
+                console.log('chatGptStopStream')
+                chatgpt.cancelStream();
                 break;
             case "SEND_ANALYTICS":
                 sendAnalytics(msg.obj);

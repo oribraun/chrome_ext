@@ -292,9 +292,10 @@
         //box-shadow: none;
         //color: #fff;
     }
-    .spinner-grow {
+    .spinner-grow, .spinner-border {
         width: 1rem;
         height: 1rem;
+        border-width: 2px;
         //vertical-align: middle;
     }
     .progress-bar {
@@ -380,7 +381,7 @@ input, .input {
                 background: #f7f7f7;
                 font-size: .8em;
                 overflow: hidden;
-                margin: 0 5px;
+                margin: 0 3px;
                 .options {
                     //max-height: 20px;
                     overflow: hidden;
@@ -406,8 +407,6 @@ input, .input {
                         color: #0f3460;
                         line-height: 1.2;
                         transition: line-height .3s ease-in-out;
-                        display: flex;
-                        flex-direction: column;
                     }
                     .option {
                         margin-left: 10px;
@@ -421,9 +420,10 @@ input, .input {
                             margin-left: 0;
                         }
                     }
-                    .spinner-grow {
+                    .spinner-grow, .spinner-border {
                         width: 1rem;
                         height: 1rem;
+                        border-width: 2px;
                     }
                     .progress-bar {
                         position: absolute;
@@ -471,6 +471,20 @@ input, .input {
         right: 0;
         top: 50%;
         transform: translateY(-100%);
+    }
+    .stop-button {
+        position: absolute;
+        bottom: 10px;
+        right: 5px;
+        a {
+            line-height: 1;
+            padding: 2px;
+            border-color: #d0d0d0;
+            color: red;
+            background: #fff;
+            animation: float 6s ease-in-out infinite;
+            font-size: 1.2em;
+        }
     }
 }
 .info-model-prompt-uploader {

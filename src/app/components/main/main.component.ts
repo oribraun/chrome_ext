@@ -93,44 +93,24 @@ export class MainComponent implements OnInit, OnDestroy {
     gotFirstAnswerFromChat = false;
     chatGptRequestInProgress = false;
     chatGptRequestError = false;
-    chatAutoScrollEnabled = true;
     chatPrompt = '';
     chatGptNeedToRefreshToken = false;
     chatGptCurrentMessage = '';
     chatGptCurrentResult = '';
     chatGptLastMessageId = '';
     chatGptConversationId = '';
-    // chatGptRequestGetConvIdProgress = false;
     chatGptHtmlSplitChunks: any[] = [];
     chatGptHtmlSplitResults: any[] = [];
     chatGptHtmlTotalChunks: number = -1;
     chatGptHtmlProgress: number = -1;
-    chatGptScrollListener: any = (e: any) => {
-        const element = e.target;
-        const rect = element.getBoundingClientRect()
-        // console.log('e.target.scrollHeight', e.target.scrollHeight)
-        // console.log('e.target.scrollTop', e.target.scrollTop)
-        // console.log('Math.floor(rect.height)', Math.floor(rect.height))
-        // console.log('e.target.scrollHeight - e.target.scrollTop', e.target.scrollHeight - e.target.scrollTop)
-        setTimeout(() => {
-            console.log('element.scrollHeight - element.scrollTop - element.clientHeight', element.scrollHeight - element.scrollTop - element.clientHeight)
-            if (Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 17){
-                console.log('bottom');
-                // this.chatAutoScrollEnabled = true;
-            } else {
-                console.log('not bottom');
-                // this.chatAutoScrollEnabled = false;
-            }
-        })
-    };
-
+    scrollInProgress = false;
+    chatShowStopButton = false;
 
     // file upload config
     fileText = ''
     fileType = ''
     fileName = ''
     fileTask = ''
-    fileSubmitInProgress = false;
     fileLoading = false;
     fileUploadErr = ''
     fileSubmitErr = ''
@@ -139,30 +119,14 @@ export class MainComponent implements OnInit, OnDestroy {
     fileUploadGptHtmlTotalChunks: number = -1;
     fileUploadGptHtmlProgress: number = -1;
     fileUploadResults = ''
+    fileSubmitInProgress = false;
     fileUploadScrollInProgress = false;
-    fileAutoScrollEnabled = true;
     fileChatGptLastMessageId = '';
     fileChatGptConversationId = '';
-    fileScrollListener: any = (e: any) => {
-        const rect = e.target.getBoundingClientRect()
-        console.log('rect', rect)
-        console.log('e.target.scrollHeight', e.target.scrollHeight)
-        console.log('e.target.scrollTop', e.target.scrollTop)
-        console.log('Math.floor(rect.height)', Math.floor(rect.height))
-        console.log('e.target.scrollHeight - e.target.scrollTop', e.target.scrollHeight - e.target.scrollTop)
-        if (Math.floor(rect.height) === (e.target.scrollHeight - e.target.scrollTop)){
-            console.log('bottom');
-            // this.fileAutoScrollEnabled = true;
-        } else {
-            console.log('not bottom');
-            // this.fileAutoScrollEnabled = false;
-        }
-    };
+    fileChatShowStopButton = false;
     promptSettings: any;
 
     subscriptions: any = []
-
-    scrollInProgress = false;
 
     copyTextSuccess:number = -1;
     copyTextTimeout: any;
@@ -189,6 +153,17 @@ export class MainComponent implements OnInit, OnDestroy {
         //     // this.promptOptimizer();
         // })
         this.listenToChromeContentScriptMessages();
+        this.messagesService.ListenFor('sidebar-expend').subscribe((res: any) => {
+            if (this.page === 'chat') {
+                setTimeout(() => {
+                    this.scrollToBottom(true);
+                }, 200);
+            } else if (this.page === 'prompt-uploader') {
+                setTimeout(() => {
+                    this.fileResultsScrollToBottom(true);
+                }, 200);
+            }
+        })
         this.messagesService.ListenFor('change-main-page').subscribe((res: any) => {
             let array = this.allowUserPages;
             if (this.config.is_company) {
@@ -198,7 +173,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.page = res.page;
                 if (this.page === 'chat') {
                     setTimeout(() => {
-                        this.scrollToBottom();
+                        this.scrollToBottom(true);
                     })
                 }
             }
@@ -226,7 +201,7 @@ export class MainComponent implements OnInit, OnDestroy {
         ]
         setInterval(() => {
             this.chat[this.chat.length - 1].text += ' a';
-            this.addChatScrollListener();
+            // this.addChatScrollListener();
             this.scrollToBottom();
         }, 100)
     }
@@ -294,7 +269,6 @@ export class MainComponent implements OnInit, OnDestroy {
                 return;
             }
             this.chatGptRequestInProgress = true;
-            this.fileAutoScrollEnabled = true;
             this.changePage('chat')
             const request = obj.request;
             const sender = obj.sender;
@@ -424,6 +398,9 @@ export class MainComponent implements OnInit, OnDestroy {
         if (text) {
             this.chat.push({text: text})
             this.chat.push({text: ''})
+            setTimeout(() => {
+                this.scrollToBottom(true);
+            }, 200);
         }
         this.sentQuestionToChat = true;
         this.gotFirstAnswerFromChat = false;
@@ -438,7 +415,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.sendMessageToChatGpt(text_to_send);
         setTimeout(() => {
             this.scrollToBottom();
-        })
+        }, 200)
     }
 
     chatProcessPrompt(text: string) {
@@ -454,8 +431,8 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chromeExtensionService.showSidebar('getAnswerListener');
         this.sendMessageToChatGpt(text);
         setTimeout(() => {
-            this.scrollToBottom();
-        })
+            this.scrollToBottom(true);
+        }, 200)
         return;
 
         const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
@@ -510,7 +487,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.sendFileTextToChatGpt(text_to_send);
         setTimeout(() => {
             this.fileResultsScrollToBottom();
-        })
+        }, 200)
     }
 
     testPrivacyModelApi() {
@@ -606,9 +583,9 @@ export class MainComponent implements OnInit, OnDestroy {
                 i--;
             }
         }
-        console.log('arr before inner split', arr)
+        // console.log('arr before inner split', arr)
         arr = arr.concat(inner_split);
-        console.log('arr before after split', arr)
+        // console.log('arr before after split', arr)
         const before_text_length = (before_text).length;
         const after_text = '';
         const after_text_length = (after_text).length;
@@ -628,7 +605,7 @@ export class MainComponent implements OnInit, OnDestroy {
             const clean_before_text = before_text.replace(/:/g, '').replace(/\n/g, '');
             out.push({before_text: '', text: 'combine the ' + clean_before_text + ' sections to get a fully detailed ' + clean_before_text, after_text: ''});
         }
-        console.log('splitStringToChunks out', out)
+        // console.log('splitStringToChunks out', out)
         return out;
     }
 
@@ -637,57 +614,68 @@ export class MainComponent implements OnInit, OnDestroy {
         return clean_str;
     }
 
-    scrollToBottom() {
-        this.addChatScrollListener();
-        // console.log('scrollToBottom')
-        // if (!this.scrollInProgress) {
-        // console.log('scrollToBottom2')
-        if (this.chatAutoScrollEnabled) {
-            this.scrollInProgress = true;
-            if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
-                // console.log('this.chatResultsScroll.nativeElement.scrollHeight', this.chatResultsScroll.nativeElement.scrollHeight)
-                $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
-                    this.scrollInProgress = false;
-                });
-            } else {
-                // window.scrollTo(0, document.body.scrollHeight);
-            }
-        }
-        // }
-    }
+    scrollToBottom(force = false) {
+        if (this.chatResultsScroll) {
+            const element = this.chatResultsScroll.nativeElement;
+            if (element) {
+                // const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                const lineHeight = parseFloat(style.lineHeight)
 
-    addChatScrollListener() {
-        this.removeChatScrollListener();
-        this.chatResultsScroll.nativeElement.addEventListener('scroll', this.chatGptScrollListener)
-    }
-    removeChatScrollListener() {
-        this.chatResultsScroll.nativeElement.removeEventListener('scroll', this.chatGptScrollListener)
-    }
-
-    fileResultsScrollToBottom() {
-        this.addFileScrollListener();
-        // console.log('fileResultsScrollToBottom')
-        if (this.fileAutoScrollEnabled) {
-            this.fileUploadScrollInProgress = true;
-            if (this.fileUploadResultsScroll && this.fileUploadResultsScroll.nativeElement) {
-                // console.log('this.fileUploadResultsScroll.nativeElement.scrollHeight', this.fileUploadResultsScroll.nativeElement.scrollHeight)
-                $(this.fileUploadResultsScroll.nativeElement).stop().animate({scrollTop: this.fileUploadResultsScroll.nativeElement.scrollHeight}, 300, () => {
-                    this.fileUploadScrollInProgress = false;
-                });
-            } else {
-                // window.scrollTo(0, document.body.scrollHeight);
+                if (Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) <= 1
+                    || Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight + 1) === lineHeight
+                    || force) {
+                    this.scrollInProgress = true;
+                    this.chatResultsScroll.nativeElement.scrollTop = this.chatResultsScroll.nativeElement.scrollHeight;
+                    setTimeout(() => {
+                        if (this.chatResultsScroll && this.chatResultsScroll.nativeElement) {
+                            this.chatResultsScroll.nativeElement.scrollTop = this.chatResultsScroll.nativeElement.scrollHeight;
+                        }
+                        this.scrollInProgress = false;
+                    }, 200)
+                    // $(this.chatResultsScroll.nativeElement).stop().animate({scrollTop: this.chatResultsScroll.nativeElement.scrollHeight}, 300, () => {
+                    //     this.scrollInProgress = false;
+                    // });
+                } else {
+                    // window.scrollTo(0, document.body.scrollHeight);
+                }
             }
         }
     }
 
-    addFileScrollListener() {
-        this.removeFileScrollListener();
-        this.fileUploadResultsScroll.nativeElement.addEventListener('scroll', this.fileScrollListener)
-    }
-    removeFileScrollListener() {
-        this.fileUploadResultsScroll.nativeElement.removeEventListener('scroll', this.fileScrollListener)
-    }
+    fileResultsScrollToBottom(force = false) {
+        if (this.fileUploadResultsScroll) {
+            const element = this.fileUploadResultsScroll.nativeElement;
+            if (element) {
+                // const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                const lineHeight = parseFloat(style.lineHeight)
+                // console.log('lineHeight', lineHeight)
+                // console.log('element.scrollHeight', element.scrollHeight)
+                // console.log('element.scrollTop', element.scrollTop)
+                // console.log('element.offsetHeight', element.offsetHeight)
+                // console.log('element.scrollHeight - element.scrollTop - element.offsetHeight', element.scrollHeight - element.scrollTop - element.offsetHeight)
 
+                if (Math.abs(element.scrollHeight - element.scrollTop - element.offsetHeight) <= 1
+                    || Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight + 1) === lineHeight
+                    || force) {
+                    this.fileUploadScrollInProgress = true;
+                    this.fileUploadResultsScroll.nativeElement.scrollTop = this.fileUploadResultsScroll.nativeElement.scrollHeight;
+                    setTimeout(() => {
+                        if (this.fileUploadResultsScroll && this.fileUploadResultsScroll.nativeElement) {
+                            this.fileUploadResultsScroll.nativeElement.scrollTop = this.fileUploadResultsScroll.nativeElement.scrollHeight;
+                        }
+                        this.fileUploadScrollInProgress = false;
+                    }, 200)
+                    // $(element.).stop().animate({scrollTop: element..scrollHeight}, 300, () => {
+                    //     this.scrollInProgress = false;
+                    // });
+                } else {
+                    // window.scrollTo(0, document.body.scrollHeight);
+                }
+            }
+        }
+    }
 
     setPrivacyModelMockData() {
         this.modelResults = {
@@ -712,6 +700,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.fileText = '';
         this.fileName = '';
         this.fileTask = '';
+        this.fileChatShowStopButton = false;
         // this.fileUploadResults = '';
     }
 
@@ -805,7 +794,7 @@ export class MainComponent implements OnInit, OnDestroy {
                         this.fileLoading = false;
                         return texts.join(' ');
                     }).catch((err) => {
-                        this.fileUploadErr = err.stack;
+                        this.fileUploadErr = err.message;
                     });
                 });
                 if (event && event.target) {
@@ -839,8 +828,9 @@ export class MainComponent implements OnInit, OnDestroy {
         this.sendFileSubmitAnalytics();
         this.chatGptRequestInProgress = true;
         this.fileSubmitInProgress = true;
-        this.fileAutoScrollEnabled = true;
+        this.uploadPromptResultsExpend = true;
         this.chatGptRequestError = false;
+        this.fileChatShowStopButton = false;
         this.fileSubmitErr = '';
         this.fileUploadResults = '';
         this.resetFileUploadLastConversation();
@@ -990,10 +980,18 @@ export class MainComponent implements OnInit, OnDestroy {
 
     handleOnErrorChatGptResponse(res: any) {
         if (this.fileSubmitInProgress) {
-            this.fileUploadResults = res.answer.errMessage;
+            if (res.answer.errMessage === 'Aborted.') {
+                if (!this.fileUploadResults || this.fileUploadResults === 'please be patient while we are working on your file') {
+                    this.fileUploadResults = res.answer.errMessage;
+                    this.chatGptRequestError = true;
+                }
+            } else {
+                this.fileUploadResults = res.answer.errMessage;
+                this.chatGptRequestError = true;
+            }
             this.fileSubmitInProgress = false;
             this.chatGptRequestInProgress = false;
-            this.chatGptRequestError = true;
+            this.fileChatShowStopButton = false;
             this.resetFileUploadChunksData();
             if (res.answer.errMessage === 'Unauthorized') {
                 this.chatGptNeedToRefreshToken = true;
@@ -1001,8 +999,17 @@ export class MainComponent implements OnInit, OnDestroy {
         } else {
             console.log('ListenToChatGpt msg', res)
             this.changePage('chat');
-            this.resetItems(res.answer.errMessage);
-            this.chatGptRequestError = true;
+            if (res.answer.errMessage === 'Aborted.') {
+                this.resetItems();
+                if (this.chat[this.chat.length - 1] && !this.chat[this.chat.length - 1].text) {
+                    this.chat[this.chat.length - 1].text = res.answer.errMessage;
+                    this.chatGptRequestError = true;
+                }
+            } else {
+                this.resetItems(res.answer.errMessage);
+                this.chatGptRequestError = true;
+            }
+            this.chatShowStopButton = false;
             if (res.answer.errMessage === 'Unauthorized') {
                 this.chatGptNeedToRefreshToken = true;
             }
@@ -1028,6 +1035,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.fileUploadResults = this.chatGptCurrentResult;
                 this.fileResultsScrollToBottom();
             }
+            this.fileChatShowStopButton = true;
         } else {
             if (this.chat[this.chat.length - 1].text !== undefined) {
                 let conversation_id = '';
@@ -1048,6 +1056,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 if (!this.gotFirstAnswerFromChat) {
                     // this.chatPrompt = '';
                     this.gotFirstAnswerFromChat = true;
+                    this.chatShowStopButton = true;
                 }
                 if (!this.chatGptHtmlSplitChunks.length && !this.chatGptHtmlSplitResults.length) {
                     this.chat[this.chat.length - 1].text = this.chatGptCurrentResult;
@@ -1087,7 +1096,6 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         console.log('this.chatGptHtmlProgress', this.chatGptHtmlProgress)
 
-        this.resetItems();
         if (this.chatGptHtmlSplitChunks.length) {
             // this.chatGptHtmlSplitResults.push(this.chatGptCurrentResult)
             const item = this.chatGptHtmlSplitChunks[0];
@@ -1110,8 +1118,8 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.chatGptHtmlProgress = 100;
             }
             const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
-            this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
-            this.removeChatScrollListener();
+            this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg);
+            this.resetItems();
             setTimeout(() => {
                 this.chatGptHtmlProgress = -1;
                 this.chatGptHtmlTotalChunks = -1;
@@ -1126,7 +1134,9 @@ export class MainComponent implements OnInit, OnDestroy {
         if (this.fileUploadGptHtmlSplitResults.length) {
             // result_length = 1;
         }
-        this.fileUploadGptHtmlProgress = 100 - Math.ceil(this.fileUploadGptHtmlSplitChunks.length / (this.fileUploadGptHtmlTotalChunks + result_length) * 100);
+        if (this.fileUploadGptHtmlProgress > -1) {
+            this.fileUploadGptHtmlProgress = 100 - Math.ceil(this.fileUploadGptHtmlSplitChunks.length / (this.fileUploadGptHtmlTotalChunks + result_length) * 100);
+        }
         if (this.fileUploadGptHtmlSplitChunks.length) {
             // this.fileUploadGptHtmlSplitResults.push(this.chatGptCurrentResult)
             const item = this.fileUploadGptHtmlSplitChunks[0];
@@ -1147,7 +1157,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.chatGptRequestInProgress = false;
             this.chatGptRequestError = false;
             this.uploadPromptResultsExpend = true;
-            this.removeFileScrollListener();
+            this.fileChatShowStopButton = false;
             this.forceBindChanges();
             setTimeout(() => {
                 this.fileUploadGptHtmlProgress = -1;
@@ -1179,6 +1189,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chatGptCurrentMessage = '';
         this.chatGptRequestInProgress = false;
         this.sentQuestionToChat = false;
+        this.chatShowStopButton = false;
         // this.chatGptHtmlTotalChunks = -1;
         // this.chatGptHtmlProgress = -1;
         if (text) {
@@ -1221,6 +1232,14 @@ export class MainComponent implements OnInit, OnDestroy {
             file_name: this.fileName,
             file_text: this.fileText.substring(0, 100)
         });
+    }
+
+    stopStream() {
+        this.chromeExtensionService.chatGptStopStream();
+    }
+
+    stopChat() {
+        this.stopStream();
     }
 
     ngOnDestroy(): void {

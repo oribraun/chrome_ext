@@ -129,6 +129,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.expended = true;
             this.chromeExtensionService.expend();
         }
+        this.messagesService.Broadcast('sidebar-expend');
     }
     openModel(e: Event) {
         e.preventDefault();

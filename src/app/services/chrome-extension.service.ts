@@ -422,6 +422,13 @@ export class ChromeExtensionService {
             })
         }
     }
+    chatGptStopStream() {
+        if (chrome.runtime) {
+            chrome.runtime.sendMessage({
+                type: "chatGptStopStream"
+            })
+        }
+    }
 }
 
 interface EventsHashTable<T> {

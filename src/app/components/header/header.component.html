@@ -61,7 +61,8 @@
         <ul class="menu-list menu-list-top">
             <li class="menu-item menu-item-pull-left">
                 <a class="menu-link" href="#" (click)="toggleSidebar($event)">
-                    <i class="bi bi-arrows-fullscreen pointer" title="Expend"></i>
+                    <i class="bi bi-chevron-left pointer" title="Expend" *ngIf="!expended"></i>
+                    <i class="bi bi-chevron-right pointer" title="Expend" *ngIf="expended"></i>
                 </a>
                 <!--                <a class="menu-link" href="#">-->
                 <!--                    <i class="bi bi-gear pointer" title="Settings" (click)="settings($event)"></i>-->
