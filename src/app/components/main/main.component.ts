@@ -268,7 +268,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.chromeExtensionService.showSidebar('ListenFor chat');
                 return;
             }
-            this.chatGptRequestInProgress = true;
+            this.resetItems();
             this.changePage('chat')
             const request = obj.request;
             const sender = obj.sender;
@@ -284,8 +284,11 @@ export class MainComponent implements OnInit, OnDestroy {
                 this.sendChatAnalytics(text, 'noGptToken');
                 return;
             }
-            this.sendChatAnalytics(text, title);
+
+            this.chatGptRequestInProgress = true;
             this.chatGptNeedToRefreshToken = false;
+
+            this.sendChatAnalytics(text, title);
 
             if (title === 'gaiaAllSummarize') {
                 this.chromeExtensionService.sendMessageToContentScript('get-html', {content: 'text'}).then((res: any) => {
@@ -320,8 +323,6 @@ export class MainComponent implements OnInit, OnDestroy {
                     if (this.isHebText(res.html)) {
                         maxLength = this.chatMaxLengthHe;
                     }
-                    this.chatGptHtmlSplitChunks = [];
-                    this.chatGptHtmlTotalChunks = -1;
                     this.chatGptHtmlProgress = 0;
                     this.chatGptHtmlSplitChunks = this.splitStringToChunks(res.html, maxLength, text)
                     this.chatGptHtmlTotalChunks = this.chatGptHtmlSplitChunks.length;
@@ -336,8 +337,7 @@ export class MainComponent implements OnInit, OnDestroy {
                         this.chatGptHtmlSplitChunks.shift();
                         this.chatProcessPromptChunks(message, fullText)
                     } else {
-                        this.chatGptRequestInProgress = false;
-                        this.chatGptRequestError = false;
+                        this.resetItems();
                         this.forceBindChanges();
                     }
                 });
@@ -396,8 +396,8 @@ export class MainComponent implements OnInit, OnDestroy {
 
     chatProcessPromptChunks(text: string, text_to_send: string, collect_user_prompts = false) {
         if (text) {
-            this.chat.push({text: text})
-            this.chat.push({text: ''})
+            this.chat.push({text: text, done: true})
+            this.chat.push({text: '', done: false})
             setTimeout(() => {
                 this.scrollToBottom(true);
             }, 200);
@@ -419,8 +419,8 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     chatProcessPrompt(text: string) {
-        this.chat.push({text:text})
-        this.chat.push({text:''})
+        this.chat.push({text:text, done: true})
+        this.chat.push({text:'', done:false})
         this.sentQuestionToChat = true;
         this.gotFirstAnswerFromChat = false;
         this.apiService.collectUserPrompt(text).subscribe((res) => {}, (err) => {});
@@ -754,6 +754,7 @@ export class MainComponent implements OnInit, OnDestroy {
                 if (event && event.target) {
                     event.target.value = '';
                 }
+                this.forceBindChanges();
             } else {
                 this.fileUploadErr = 'no file content';
             }
@@ -791,10 +792,14 @@ export class MainComponent implements OnInit, OnDestroy {
                     return Promise.all(countPromises).then((texts) => {
                         this.fileText = texts.join('');
                         // console.log('this.fileText', this.fileText)
+                        this.fileUploadErr = '';
+                        this.uploadPromptExpend = true;
                         this.fileLoading = false;
+                        this.forceBindChanges();
                         return texts.join(' ');
                     }).catch((err) => {
                         this.fileUploadErr = err.message;
+                        this.forceBindChanges();
                     });
                 });
                 if (event && event.target) {
@@ -826,20 +831,22 @@ export class MainComponent implements OnInit, OnDestroy {
         //     return;
         // }
         this.sendFileSubmitAnalytics();
+        this.resetFileUploadItems();
+        this.resetFileUploadLastConversation();
+
         this.chatGptRequestInProgress = true;
         this.fileSubmitInProgress = true;
         this.uploadPromptResultsExpend = true;
-        this.chatGptRequestError = false;
-        this.fileChatShowStopButton = false;
-        this.fileSubmitErr = '';
-        this.fileUploadResults = '';
-        this.resetFileUploadLastConversation();
+
+        // this.chatGptRequestError = false;
+        // this.fileChatShowStopButton = false;
+        // this.fileSubmitErr = '';
+        // this.fileUploadResults = '';
 
         let maxLength = this.chatMaxLength;
         if (this.isHebText(this.fileText)) {
             maxLength = this.chatMaxLengthHe;
         }
-        this.resetFileUploadChunksData();
         this.fileUploadGptHtmlProgress = 0;
         const before_text = this.fileTask + ':\n';
         this.fileUploadGptHtmlSplitChunks = this.splitStringToChunks(this.fileText, maxLength, before_text)
@@ -855,7 +862,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.fileUploadGptHtmlSplitChunks.shift();
             this.fileUploadProcessPromptChunks(fullText)
         } else {
-            this.fileSubmitInProgress = false;
+            this.resetFileUploadItems();
             this.forceBindChanges();
         }
         // const prompt = this.fileTask + ':\n\n' + this.fileText;
@@ -981,18 +988,15 @@ export class MainComponent implements OnInit, OnDestroy {
     handleOnErrorChatGptResponse(res: any) {
         if (this.fileSubmitInProgress) {
             if (res.answer.errMessage === 'Aborted.') {
+                this.resetFileUploadItems();
                 if (!this.fileUploadResults || this.fileUploadResults === 'please be patient while we are working on your file') {
                     this.fileUploadResults = res.answer.errMessage;
                     this.chatGptRequestError = true;
                 }
             } else {
-                this.fileUploadResults = res.answer.errMessage;
+                this.resetFileUploadItems(res.answer.errMessage);
                 this.chatGptRequestError = true;
             }
-            this.fileSubmitInProgress = false;
-            this.chatGptRequestInProgress = false;
-            this.fileChatShowStopButton = false;
-            this.resetFileUploadChunksData();
             if (res.answer.errMessage === 'Unauthorized') {
                 this.chatGptNeedToRefreshToken = true;
             }
@@ -1005,11 +1009,12 @@ export class MainComponent implements OnInit, OnDestroy {
                     this.chat[this.chat.length - 1].text = res.answer.errMessage;
                     this.chatGptRequestError = true;
                 }
+                this.chat[this.chat.length - 1].done = true;
             } else {
                 this.resetItems(res.answer.errMessage);
                 this.chatGptRequestError = true;
             }
-            this.chatShowStopButton = false;
+            // this.resetChatChunksData();
             if (res.answer.errMessage === 'Unauthorized') {
                 this.chatGptNeedToRefreshToken = true;
             }
@@ -1078,10 +1083,19 @@ export class MainComponent implements OnInit, OnDestroy {
         this.fileChatGptConversationId = ''
     }
 
-    resetFileUploadChunksData() {
+    resetFileUploadItems(text: string = '') {
+        this.chatGptRequestError = false;
+        this.fileChatShowStopButton = false;
+        this.fileSubmitErr = '';
+        if (text) {
+            this.fileUploadResults = text;
+        }
         this.fileUploadGptHtmlSplitChunks = [];
         this.fileUploadGptHtmlTotalChunks = -1;
         this.fileUploadGptHtmlProgress = -1;
+        this.fileSubmitInProgress = false;
+        this.chatGptRequestInProgress = false;
+        this.forceBindChanges();
     }
 
     handleDoneChatGptChunkRequest() {
@@ -1119,6 +1133,9 @@ export class MainComponent implements OnInit, OnDestroy {
             }
             const msg = this.chromeExtensionService.genTitleMessage(this.chatGptConversationId, this.chatGptLastMessageId);
             this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg);
+            if (this.chat[this.chat.length - 1]) {
+                this.chat[this.chat.length - 1].done = true;
+            }
             this.resetItems();
             setTimeout(() => {
                 this.chatGptHtmlProgress = -1;
@@ -1153,11 +1170,8 @@ export class MainComponent implements OnInit, OnDestroy {
             this.chatGptHtmlProgress = 100;
             const msg = this.chromeExtensionService.genTitleMessage(this.fileChatGptConversationId, this.fileChatGptLastMessageId);
             this.chromeExtensionService.generalSendMessageToChatGpt('chatGptGenTitle', msg)
-            this.fileSubmitInProgress = false;
-            this.chatGptRequestInProgress = false;
-            this.chatGptRequestError = false;
+            this.resetFileUploadItems();
             this.uploadPromptResultsExpend = true;
-            this.fileChatShowStopButton = false;
             this.forceBindChanges();
             setTimeout(() => {
                 this.fileUploadGptHtmlProgress = -1;
@@ -1190,8 +1204,10 @@ export class MainComponent implements OnInit, OnDestroy {
         this.chatGptRequestInProgress = false;
         this.sentQuestionToChat = false;
         this.chatShowStopButton = false;
-        // this.chatGptHtmlTotalChunks = -1;
-        // this.chatGptHtmlProgress = -1;
+        this.chatGptHtmlSplitChunks = [];
+        this.chatGptHtmlTotalChunks = -1;
+        this.chatGptHtmlProgress = -1;
+        this.chatGptRequestError = false;
         if (text) {
             this.chat[this.chat.length - 1].text = text;
         }

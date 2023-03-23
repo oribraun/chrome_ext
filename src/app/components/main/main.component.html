@@ -232,7 +232,7 @@
                          [ngStyle]="{'width': chatGptHtmlProgress + '%'}"
                     ></div>
                     <div class="clipboard-wrapper"
-                         *ngIf="(item.text && !(i % 2)) || (item.text && (i % 2) && !chatGptRequestInProgress)">
+                         *ngIf="(item.text && !(i % 2)) || (item.text && (i % 2) && item.done)">
                         <div class="clipboard">
                             <i class="bi bi-clipboard pointer" (click)="copyText(item.text, i)" *ngIf="copyTextSuccess === -1 || copyTextSuccess !== i"></i>
                             <i class="bi bi-hand-thumbs-up text-success" *ngIf="copyTextSuccess !== -1 && copyTextSuccess === i"></i>
