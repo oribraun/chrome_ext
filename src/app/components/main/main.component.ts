@@ -757,7 +757,6 @@ export class MainComponent implements OnInit, OnDestroy {
         } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             this.readDocxFile(event, file)
         } else {
-            console.log('this.fileType', this.fileType)
             this.fileUploadErr = 'please upload txt/pdf file only';
         }
     }
