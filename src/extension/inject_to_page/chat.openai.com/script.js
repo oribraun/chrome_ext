@@ -11,10 +11,10 @@ class Main {
     init(inject) {
         const textarea_clone_list = document.getElementsByClassName('textarea_clone');
         if (textarea_clone_list && textarea_clone_list.length) {
-            this.onRemoveInitAngular(this.debug)
+            // this.onRemoveInitAngular(this.debug)
         } else {
             if (inject) {
-                this.onInitAngular(this.debug);
+                // this.onInitAngular(this.debug);
                 this.getTokenFromChatGpt(this.debug);
             }
         }

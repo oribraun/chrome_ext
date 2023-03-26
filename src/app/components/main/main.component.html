@@ -55,10 +55,10 @@
         <div class="drop-area" appDragAndDrop (fileDropped)="filesDropped($event)">
             <div class="dashed-area">
                 <div class="header">
-                    You can upload txt/pdf files only.
+                    txt/pdf/csv/xlsx/docx files only.
                 </div>
                 Drop files here or click to select
-                <input class="file-input" type="file" multiple (change)="uploadFiles($event)">
+                <input class="file-input" type="file" title="" accept=".txt, .pdf, .csv, .xlsx, .docx" (change)="uploadFiles($event)">
             </div>
         </div>
         <div class="loader-wrapper" *ngIf="fileLoading">
@@ -133,7 +133,9 @@
                         </div>
                         <div class="option option-no-margin">
                             <div class="file-text" *ngIf="fileUploadResults">
-                                <h6 class="pre-wrap"[ngClass]="{'text-center': chatGptRequestError}">{{fileUploadResults}}</h6>
+                                <h6 class="pre-wrap computer-prompt"[ngClass]="{
+                                    'text-center': chatGptRequestError || fileUploadResults === 'please be patient while we are working on your file'
+                                }">{{fileUploadResults}}</h6>
                             </div>
                         </div>
                     </div>
@@ -223,7 +225,7 @@
                         <i *ngIf="!(i % 2)" class="bi bi-person"></i>
                         <i *ngIf="(i % 2)" class="bi bi-laptop"></i>
                     </span>
-                    <span class="prompt pre-wrap" [innerHTML]="item.text"></span>
+                    <span class="prompt pre-wrap" [ngClass]="{'computer-prompt': (i % 2)}" [innerHTML]="item.text"></span>
                     <div class="spinner-border" role="status" *ngIf="!item.text && sentQuestionToChat">
                         <span class="sr-only"></span>
                     </div>

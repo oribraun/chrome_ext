@@ -182,7 +182,7 @@ class ChatGPTClient {
                         this.accessToken = '';
                     }
                 } else {
-                    response.errMessage = resJson?.detail || "something went wrong";
+                    response.errMessage = resJson?.detail || resJson?.detail?.message || "something went wrong";
                 }
                 sendAnalytics({ event: "chat-gpt-error", type: resp.status, obj: response });
                 return cb(response);

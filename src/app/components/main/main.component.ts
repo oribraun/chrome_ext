@@ -8,6 +8,9 @@ import {HttpEventType} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {MessagesService} from "../../services/messages.service";
 import * as pdfjsLib from "pdfjs-dist";
+import * as XLSX from 'xlsx';
+// import Docxtemplater from 'docxtemplater';
+// import PizZip from 'pizzip';
 
 import {
     trigger,
@@ -20,6 +23,8 @@ import {
 import {maxWorkers} from "@angular-devkit/build-angular/src/utils/environment-options";
 
 declare var $: any;
+declare var mammoth: any;
+
 @Component({
     selector: 'app-main',
     templateUrl: './main.component.html',
@@ -82,7 +87,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
     // chat config
     chatLimit = 50;
-    chatMaxLength = 12000;
+    chatMaxLength = 13000;
     chatMaxLengthHe = 3000;
     chat: any = [
         // {text: 'hi there'},
@@ -324,6 +329,7 @@ export class MainComponent implements OnInit, OnDestroy {
                         maxLength = this.chatMaxLengthHe;
                     }
                     this.chatGptHtmlProgress = 0;
+                    console.log('splitStringToChunks gaiaAllSummarize')
                     this.chatGptHtmlSplitChunks = this.splitStringToChunks(res.html, maxLength, text)
                     this.chatGptHtmlTotalChunks = this.chatGptHtmlSplitChunks.length;
                     console.log('this.chatGptHtmlTotalChunks', this.chatGptHtmlTotalChunks)
@@ -619,11 +625,22 @@ export class MainComponent implements OnInit, OnDestroy {
             const element = this.chatResultsScroll.nativeElement;
             if (element) {
                 // const rect = element.getBoundingClientRect();
-                const style = window.getComputedStyle(element);
-                const lineHeight = parseFloat(style.lineHeight)
+                const fileUploadResultsElement = element.querySelector('.computer-prompt:last-child');
+                // console.log('fileUploadResultsElement', fileUploadResultsElement);
+                let lineHeight = 0;
+                if (fileUploadResultsElement) {
+                    const style = window.getComputedStyle(fileUploadResultsElement);
+                    lineHeight = Math.ceil(parseFloat(style.lineHeight))
+                }
+                // console.log('lineHeight', lineHeight)
+                // console.log('element.scrollHeight', element.scrollHeight)
+                // console.log('element.scrollTop', element.scrollTop)
+                // console.log('element.offsetHeight', element.offsetHeight)
+                // console.log('element.scrollHeight - element.scrollTop - element.offsetHeight', Math.floor(Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight)))
+
 
                 if (Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) <= 1
-                    || Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight + 1) === lineHeight
+                    || Math.floor(Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight)) === lineHeight
                     || force) {
                     this.scrollInProgress = true;
                     this.chatResultsScroll.nativeElement.scrollTop = this.chatResultsScroll.nativeElement.scrollHeight;
@@ -648,16 +665,21 @@ export class MainComponent implements OnInit, OnDestroy {
             const element = this.fileUploadResultsScroll.nativeElement;
             if (element) {
                 // const rect = element.getBoundingClientRect();
-                const style = window.getComputedStyle(element);
-                const lineHeight = parseFloat(style.lineHeight)
+                const fileUploadResultsElement = element.querySelector('.computer-prompt:last-child');
+                // console.log('fileUploadResultsElement', fileUploadResultsElement);
+                let lineHeight = 0;
+                if (fileUploadResultsElement) {
+                    const style = window.getComputedStyle(fileUploadResultsElement);
+                    lineHeight = Math.ceil(parseFloat(style.lineHeight))
+                }
                 // console.log('lineHeight', lineHeight)
                 // console.log('element.scrollHeight', element.scrollHeight)
                 // console.log('element.scrollTop', element.scrollTop)
                 // console.log('element.offsetHeight', element.offsetHeight)
-                // console.log('element.scrollHeight - element.scrollTop - element.offsetHeight', element.scrollHeight - element.scrollTop - element.offsetHeight)
+                // console.log('element.scrollHeight - element.scrollTop - element.offsetHeight', Math.floor(Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight)))
 
                 if (Math.abs(element.scrollHeight - element.scrollTop - element.offsetHeight) <= 1
-                    || Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight + 1) === lineHeight
+                    || Math.floor(Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight)) === lineHeight
                     || force) {
                     this.fileUploadScrollInProgress = true;
                     this.fileUploadResultsScroll.nativeElement.scrollTop = this.fileUploadResultsScroll.nativeElement.scrollHeight;
@@ -711,15 +733,7 @@ export class MainComponent implements OnInit, OnDestroy {
         const file = files[0]
         this.fileName = file.name;
         // console.log('type', file.type);
-        this.fileType = file.type;
-        if (file.type === 'text/plain') {
-            this.readFile(event, file)
-        } else if (file.type === 'application/pdf') {
-            // console.log('type', file.type);
-            this.readPdfFile(event, file)
-        } else {
-            this.fileUploadErr = 'please upload txt/pdf file only';
-        }
+        this.handleFile(event, file);
     }
 
     async filesDropped(files: FileList) {
@@ -727,12 +741,23 @@ export class MainComponent implements OnInit, OnDestroy {
         const file = files[0]
         this.fileName = file.name;
         // console.log('type', file.name);
+        this.handleFile(null, file);
+    }
+
+    handleFile(event: any, file: File) {
         this.fileType = file.type;
         if (file.type === 'text/plain') {
-            this.readFile(null, file)
+            this.readFile(event, file)
+        } else if (file.type === 'text/csv') {
+            this.readCsvFile(event, file)
         } else if (file.type === 'application/pdf') {
-            this.readPdfFile(null, file)
+            this.readPdfFile(event, file)
+        } else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            this.readXlsxFile(event, file)
+        } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            this.readDocxFile(event, file)
         } else {
+            console.log('this.fileType', this.fileType)
             this.fileUploadErr = 'please upload txt/pdf file only';
         }
     }
@@ -743,10 +768,36 @@ export class MainComponent implements OnInit, OnDestroy {
             // console.log('fileReader.result', fileReader.result)
             // console.log(fileReader.result);
             if (fileReader.result) {
-                const text = fileReader.result.toString();
+                // const text = fileReader.result.toString();
                 // if (text.length > this.chatMaxLength) {
                 //     this.fileUploadErr = 'currently we support max text length of ' + this.chatMaxLength;
                 // } else {
+                this.fileText = this.cleanText(fileReader.result.toString());
+                this.fileUploadErr = '';
+                this.uploadPromptExpend = true;
+                // }
+                if (event && event.target) {
+                    event.target.value = '';
+                }
+                this.forceBindChanges();
+            } else {
+                this.fileUploadErr = 'no file content';
+            }
+
+        }
+        fileReader.onerror = (event) => {
+            // console.log('error reading file', event);
+            this.fileLoading = false;
+            this.fileUploadErr = 'error in reading file';
+            this.forceBindChanges();
+        };
+        fileReader.readAsText(file);
+    }
+
+    readCsvFile(event: any,file: File) {
+        let fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            if (fileReader.result) {
                 this.fileText = fileReader.result.toString();
                 this.fileUploadErr = '';
                 this.uploadPromptExpend = true;
@@ -760,6 +811,12 @@ export class MainComponent implements OnInit, OnDestroy {
             }
 
         }
+        fileReader.onerror = (event) => {
+            // console.log('error reading file', event);
+            this.fileLoading = false;
+            this.fileUploadErr = 'error in reading file';
+            this.forceBindChanges();
+        };
         fileReader.readAsText(file);
     }
 
@@ -790,7 +847,7 @@ export class MainComponent implements OnInit, OnDestroy {
                     }
                     // Wait for all pages and join text
                     return Promise.all(countPromises).then((texts) => {
-                        this.fileText = texts.join('');
+                        this.fileText = this.cleanText(texts.join(''));
                         // console.log('this.fileText', this.fileText)
                         this.fileUploadErr = '';
                         this.uploadPromptExpend = true;
@@ -810,7 +867,96 @@ export class MainComponent implements OnInit, OnDestroy {
             }
 
         }
+        fileReader.onerror = (event) => {
+            // console.log('error reading file', event);
+            this.fileLoading = false;
+            this.fileUploadErr = 'error in reading file';
+            this.forceBindChanges();
+        };
         fileReader.readAsArrayBuffer(file);
+    }
+
+    readDocxFile(event: any,file: File) {
+        this.fileLoading = true;
+        let fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            // console.log('fileReader.result', fileReader.result)
+            // console.log(fileReader.result);
+            if (fileReader.result) {
+                // @ts-ignore
+                mammoth.extractRawText({arrayBuffer: fileReader.result})
+                    .then((result: any) => {
+                        var text = this.cleanText(result.value); // The raw text
+                        this.fileText = text;
+                        this.fileLoading = false;
+                        this.forceBindChanges();
+
+                    }).catch((err: any) => {
+                    this.fileUploadErr = err.message;
+                    this.fileLoading = false;
+                    this.forceBindChanges();
+                }).done();
+                if (event && event.target) {
+                    event.target.value = '';
+                }
+            } else {
+                this.fileUploadErr = 'no file content';
+            }
+
+        }
+        fileReader.onerror = (event) => {
+            // console.log('error reading file', event);
+            this.fileLoading = false;
+            this.fileUploadErr = 'error in reading file';
+            this.forceBindChanges();
+        };
+        fileReader.readAsArrayBuffer(file);
+    }
+
+    readXlsxFile(event: any,file: File) {
+        this.fileLoading = true;
+        let fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            // console.log('fileReader.result', fileReader.result)
+            // console.log(fileReader.result);
+            if (fileReader.result) {
+                // @ts-ignore
+                try {
+                    const string = fileReader.result.toString();
+                    const wb: XLSX.WorkBook = XLSX.read(string, {type: 'binary'});
+                    /* selected the first sheet */
+                    const wsname: string = wb.SheetNames[0];
+                    const ws: XLSX.WorkSheet = wb.Sheets[wsname];
+
+                    /* save data */
+                    const text = XLSX.utils.sheet_to_txt(ws); // to get 2d array pass 2nd parameter as object {header: 1}
+                    this.fileText = text;
+                } catch (err: any) {
+                    this.fileUploadErr = err;
+                }
+                this.fileLoading = false;
+                if (event && event.target) {
+                    event.target.value = '';
+                }
+            } else {
+                this.fileUploadErr = 'no file content';
+            }
+
+        }
+        fileReader.onerror = (event) => {
+            // console.log('error reading file', event);
+            this.fileLoading = false;
+            this.fileUploadErr = 'error in reading file';
+            this.forceBindChanges();
+        };
+        fileReader.readAsBinaryString(file);
+    }
+
+    cleanText(text: string) {
+        return text.replace(/\t/g, '')
+            .replace(/\n +/g, '\n')
+            .replace(/\n+/g, '\n')
+            .replace(/ +/g, ' ');
     }
 
     submitFileUpload() {
@@ -849,6 +995,7 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         this.fileUploadGptHtmlProgress = 0;
         const before_text = this.fileTask + ':\n';
+        console.log('splitStringToChunks submitFileUpload')
         this.fileUploadGptHtmlSplitChunks = this.splitStringToChunks(this.fileText, maxLength, before_text)
         this.fileUploadGptHtmlTotalChunks = this.fileUploadGptHtmlSplitChunks.length;
         if (this.fileUploadGptHtmlSplitChunks.length) {
@@ -867,6 +1014,9 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         // const prompt = this.fileTask + ':\n\n' + this.fileText;
         // console.log('prompt', prompt)
+        setTimeout(() => {
+            this.fileResultsScrollToBottom(true);
+        }, 200);
     }
 
     copyTextToPrompt() {
@@ -986,6 +1136,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     handleOnErrorChatGptResponse(res: any) {
+        console.log('handleOnErrorChatGptResponse this.fileSubmitInProgress', this.fileSubmitInProgress)
         if (this.fileSubmitInProgress) {
             if (res.answer.errMessage === 'Aborted.') {
                 this.resetFileUploadItems();
@@ -1042,7 +1193,7 @@ export class MainComponent implements OnInit, OnDestroy {
             }
             this.fileChatShowStopButton = true;
         } else {
-            if (this.chat[this.chat.length - 1].text !== undefined) {
+            if (this.chat[this.chat.length - 1] && this.chat[this.chat.length - 1].text !== undefined) {
                 let conversation_id = '';
                 let message_id = '';
                 if (res.answer.data) {
@@ -1084,6 +1235,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     resetFileUploadItems(text: string = '') {
+        console.log('resetFileUploadItems', text)
         this.chatGptRequestError = false;
         this.fileChatShowStopButton = false;
         this.fileSubmitErr = '';
@@ -1147,6 +1299,7 @@ export class MainComponent implements OnInit, OnDestroy {
     handleDoneChatGptFileChunkRequest() {
         console.log('this.fileUploadGptHtmlSplitChunks', this.fileUploadGptHtmlSplitChunks)
         console.log('this.fileUploadGptHtmlSplitResults', this.fileUploadGptHtmlSplitResults)
+        console.log('this.fileUploadGptHtmlProgress', this.fileUploadGptHtmlProgress)
         let result_length = 0
         if (this.fileUploadGptHtmlSplitResults.length) {
             // result_length = 1;

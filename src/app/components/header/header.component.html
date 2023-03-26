@@ -1,62 +1,4 @@
 <div class="header">
-    <!--    <nav class="navbar">-->
-    <!--        <div class="container-fluid">-->
-    <!--            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">-->
-    <!--                <span class="navbar-toggler-icon"></span>-->
-    <!--            </button>-->
-    <!--            <a class="navbar-brand" href="#">-->
-    <!--                <i class="bi bi-box-arrow-right pointer" title="Logout" (click)="logout($event)"></i>-->
-    <!--            </a>-->
-    <!--            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">-->
-    <!--                <div class="offcanvas-header">-->
-    <!--                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Hello {{user.username}} - <small>{{user.role_display}} Version</small></h5>-->
-    <!--                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>-->
-    <!--                </div>-->
-    <!--                <div class="offcanvas-body">-->
-    <!--                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">-->
-    <!--                        <li class="nav-item" *ngIf="user.company_name">-->
-    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
-    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
-    <!--                               (click)="changePage($event, 'privacy-model')">-->
-    <!--                                Privacy Model-->
-    <!--                            </a>-->
-    <!--                        </li>-->
-    <!--                        <li class="nav-item">-->
-    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
-    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
-    <!--                               (click)="changePage($event, 'prompt-uploader')">-->
-    <!--                                Prompt Uploader-->
-    <!--                            </a>-->
-    <!--                        </li>-->
-    <!--                        <li class="nav-item">-->
-    <!--                            <a class="nav-link active" aria-current="page" href="#"-->
-    <!--                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"-->
-    <!--                               (click)="changePage($event, 'chat')">-->
-    <!--                                Chat-->
-    <!--                            </a>-->
-    <!--                        </li>-->
-    <!--                        &lt;!&ndash;                        <li class="nav-item dropdown">&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                Dropdown&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                            </a>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                            <ul class="dropdown-menu">&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Action</a></li>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Another action</a></li>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                <li>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                    <hr class="dropdown-divider">&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                </li>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                                <li><a class="dropdown-item" href="#">Something else here</a></li>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                            </ul>&ndash;&gt;-->
-    <!--                        &lt;!&ndash;                        </li>&ndash;&gt;-->
-    <!--                    </ul>-->
-    <!--                    &lt;!&ndash;                    <form class="d-flex mt-3" role="search">&ndash;&gt;-->
-    <!--                    &lt;!&ndash;                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">&ndash;&gt;-->
-    <!--                    &lt;!&ndash;                        <button class="btn btn-outline-success" type="submit">Search</button>&ndash;&gt;-->
-    <!--                    &lt;!&ndash;                    </form>&ndash;&gt;-->
-    <!--                </div>-->
-    <!--            </div>-->
-    <!--        </div>-->
-    <!--    </nav>-->
     <div class="menu absolute-menu">
         <ul class="menu-list menu-list-top">
             <li class="menu-item menu-item-pull-left">
@@ -103,16 +45,16 @@
                     File Uploader
                 </a>
             </li>
-            <ng-container *ngIf="isChatGptPage">
-                <li class="menu-separator" *ngIf="user.company_name">|</li>
-                <li class="menu-item" *ngIf="user.company_name">
-                    <a class="menu-link" href="#"
-                       [ngClass]="{'active': currentPage === 'privacy-model'}"
-                       (click)="changePage($event, 'privacy-model')">
-                        Privacy
-                    </a>
-                </li>
-            </ng-container>
+<!--            <ng-container *ngIf="isChatGptPage">-->
+<!--                <li class="menu-separator" *ngIf="user.company_name">|</li>-->
+<!--                <li class="menu-item" *ngIf="user.company_name">-->
+<!--                    <a class="menu-link" href="#"-->
+<!--                       [ngClass]="{'active': currentPage === 'privacy-model'}"-->
+<!--                       (click)="changePage($event, 'privacy-model')">-->
+<!--                        Privacy-->
+<!--                    </a>-->
+<!--                </li>-->
+<!--            </ng-container>-->
         </ul>
     </div>
     <div class="welcome-header text-center">
