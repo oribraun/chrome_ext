@@ -516,12 +516,14 @@ try {
                         }).then(() => {
 
                         }).catch((err) => {
-                            console.log('network error', err);
+                            // console.log('network error', err);
                             const response = chatgpt.generalResponse();
                             response.err = 1;
                             response.errMessage = err.message;
                             if (response.errMessage === 'The user aborted a request.') {
                                 response.errMessage = 'Aborted.'
+                            } else {
+                                sendAnalytics({ event: "chat-gpt-error", type: 'exception', obj: response });
                             }
                             if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: response});
                         });
@@ -596,7 +598,7 @@ try {
                 chatgpt.updateAccessToken(msg.token);
                 break;
             case "chatGptStopStream":
-                console.log('chatGptStopStream')
+                // console.log('chatGptStopStream')
                 chatgpt.cancelStream();
                 break;
             case "SEND_ANALYTICS":
