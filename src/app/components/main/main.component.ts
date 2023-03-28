@@ -125,7 +125,7 @@ export class MainComponent implements OnInit, OnDestroy {
     fileUploadGptHtmlSplitResults: any[] = [];
     fileUploadGptHtmlTotalChunks: number = -1;
     fileUploadGptHtmlProgress: number = -1;
-    fileUploadResults = ''
+    fileUploadResults = 'test'
     fileSubmitInProgress = false;
     fileUploadScrollInProgress = false;
     fileChatGptLastMessageId = '';
