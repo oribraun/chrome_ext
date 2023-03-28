@@ -125,7 +125,7 @@ export class MainComponent implements OnInit, OnDestroy {
     fileUploadGptHtmlSplitResults: any[] = [];
     fileUploadGptHtmlTotalChunks: number = -1;
     fileUploadGptHtmlProgress: number = -1;
-    fileUploadResults = 'test'
+    fileUploadResults = ''
     fileSubmitInProgress = false;
     fileUploadScrollInProgress = false;
     fileChatGptLastMessageId = '';
@@ -1365,7 +1365,8 @@ export class MainComponent implements OnInit, OnDestroy {
             ext = type;
             if (ext === 'pdf') {
                 const doc = new jsPDF();
-                doc.text(results, 6, 10);
+                var splitTitle = doc.splitTextToSize(results, 196);
+                doc.text(splitTitle, 6, 10);
                 results = doc.output();
             } else if (ext === 'docx') {
                 const doc = new Document({
