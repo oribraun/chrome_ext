@@ -217,7 +217,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
 
     setExtensionPrompts() {
-        this.config.prompt_settings = this.promptSettings;
+        this.config.prompt_settings = JSON.parse(JSON.stringify(this.promptSettings))   ;
         if (chrome.runtime) {
             chrome.runtime.sendMessage({
                 type: "UPDATE_CUSTOM_PROMPT",

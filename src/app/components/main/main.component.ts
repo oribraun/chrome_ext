@@ -8,7 +8,9 @@ import {HttpEventType} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {MessagesService} from "../../services/messages.service";
 import * as pdfjsLib from "pdfjs-dist";
+import { jsPDF } from "jspdf";
 import * as XLSX from 'xlsx';
+import { Document, Paragraph, Packer, TextRun } from 'docx';
 // import Docxtemplater from 'docxtemplater';
 // import PizZip from 'pizzip';
 
@@ -129,6 +131,13 @@ export class MainComponent implements OnInit, OnDestroy {
     fileChatGptLastMessageId = '';
     fileChatGptConversationId = '';
     fileChatShowStopButton = false;
+    fileSaveMap: any = {
+        txt: {type: 'text/plain;charset=utf-8'},
+        pdf: {type: 'application/pdf;charset=utf-8'},
+        csv: {type: 'text/csv;charset=utf-8'},
+        // xlsx: {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8,'},
+        docx: {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=UTF-8,'}
+    }
     promptSettings: any;
 
     subscriptions: any = []
@@ -192,6 +201,10 @@ export class MainComponent implements OnInit, OnDestroy {
         this.subscriptions.push(
             this.config.prompt_settings_subject.subscribe((val) => {
                 this.promptSettings = this.config.prompt_settings;
+                const titles = this.promptSettings.map((o: any) => o.title);
+                if (titles.indexOf(this.fileTask) === -1) {
+                    this.fileTask = '';
+                }
             })
         )
         // setTimeout(() => {
@@ -435,13 +448,13 @@ export class MainComponent implements OnInit, OnDestroy {
         this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
-        this.sendMessageToChatGpt(text);
+        //this.sendMessageToChatGpt(text);
         setTimeout(() => {
             this.scrollToBottom(true);
         }, 200)
-        return;
+        //return;
 
-        const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
+        //const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
         const answers: any = [];
         this.chatPrompt = '';
         this.apiService.getAnswerStreaming(text).subscribe((event: any) => {
@@ -1341,12 +1354,43 @@ export class MainComponent implements OnInit, OnDestroy {
     togglePromptResultsOptions() {
         this.uploadPromptResultsExpend = !this.uploadPromptResultsExpend;
     }
-    saveCurrentFileUploadResults() {
+    async saveCurrentFileUploadResults(type = 'txt') {
         const link = document.createElement("a");
-        var file = new Blob([this.fileUploadResults],
-            { type: "text/plain;charset=utf-8" });
+        const options = {type: "text/plain;charset=utf-8"}
+        let ext = 'txt';
+        let blob;
+        let results = this.fileUploadResults;
+        if  (this.fileSaveMap[type]) {
+            options.type = this.fileSaveMap[type].type;
+            ext = type;
+            if (ext === 'pdf') {
+                const doc = new jsPDF();
+                doc.text(results, 6, 10);
+                results = doc.output();
+            } else if (ext === 'docx') {
+                const doc = new Document({
+                    sections: [
+                        {
+                            properties: {},
+                            children: [
+                                new Paragraph({
+                                    children: [
+                                        new TextRun(results),
+                                    ],
+                                }),
+                            ],
+                        },
+                    ],
+                });
+                blob = await Packer.toBlob(doc)
+            }
+        }
+        var file = new Blob([results],options);
+        if (blob) {
+            file = blob;
+        }
         link.href = URL.createObjectURL(file);
-        link.download = "results.txt";
+        link.download = "results." + ext;
         link.click();
         URL.revokeObjectURL(link.href);
     }

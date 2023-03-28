@@ -247,7 +247,8 @@
         padding: 5px 15px 5px 10px;
         background: #ececec;
         margin-bottom: 10px;
-        border-radius: 5px 5px 0 0;
+        //border-radius: 5px 5px 0 0;
+        border-radius: 5px 5px;
         box-shadow: 0 6px 8px -4px #d0d0d0;
         //transform: translate(-4px, 0px);
         margin-right: 8px;
@@ -399,6 +400,28 @@ input, .input, .button {
                         bottom: 0;
                         padding: 5px;
                         line-height: 1;
+                        .file-type-options {
+                            position: absolute;
+                            top: -1px;
+                            line-height: 1.5;
+                            left: 100%;
+                            width: 0;
+                            overflow: hidden;
+                            transition: width .3s ease-in-out;
+                            .type {
+                                display: inline-block;
+                                margin: 0 4px;
+                                vertical-align: middle;
+                                i {
+                                    display: inline-block;
+                                }
+                            }
+                        }
+                        &:hover {
+                            .file-type-options {
+                                width: 100px;
+                            }
+                        }
                     }
                     h6 {
                         //font-family: 'OpenSans-Bold';
@@ -407,6 +430,7 @@ input, .input, .button {
                         color: #0f3460;
                         line-height: 1.2;
                         transition: line-height .3s ease-in-out;
+                        margin-bottom: 0.6rem;
                     }
                     .option {
                         margin-left: 10px;

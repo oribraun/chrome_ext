@@ -116,8 +116,13 @@
                             <div class="expend" *ngIf="!uploadPromptResultsExpend"><i class="bi bi-chevron-down"></i></div>
                             <div class="minimize" *ngIf="uploadPromptResultsExpend"><i class="bi bi-chevron-up"></i></div>
                         </div>
-                        <div class="bottom-left-icon pointer" *ngIf="!fileSubmitInProgress" (click)="saveCurrentFileUploadResults()">
+                        <div class="bottom-left-icon" *ngIf="!fileSubmitInProgress">
                             <div class="expend"><i class="bi bi-save"></i></div>
+                            <div class="file-type-options">
+                                <div class="type pointer" title="txt" (click)="saveCurrentFileUploadResults('txt')"><i class="bi bi-filetype-txt"></i></div>
+                                <div class="type pointer" title="pdf" (click)="saveCurrentFileUploadResults('pdf')"><i class="bi bi-filetype-pdf"></i></div>
+                                <div class="type pointer" title="docx" (click)="saveCurrentFileUploadResults('docx')"><i class="bi bi-filetype-docx"></i></div>
+                            </div>
                         </div>
                         <div class="head">
                             <h6 class="text-center" *ngIf="fileUploadResults">
