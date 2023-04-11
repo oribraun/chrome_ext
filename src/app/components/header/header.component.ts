@@ -138,7 +138,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     async getPromptSettingsApi(openModel = false) {
         this.apiService.getSettings(this.promptSettingsKey).subscribe((res: any) => {
-            if (!res.err) {
+            if (!res.err && res.data) {
                 this.promptSettings = [];
                 for (let i =0; i < this.promptSettingLimit; i++) {
                     const idNum = i + 1;

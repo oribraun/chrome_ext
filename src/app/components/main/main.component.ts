@@ -448,11 +448,11 @@ export class MainComponent implements OnInit, OnDestroy {
         this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
-        //this.sendMessageToChatGpt(text);
+        this.sendMessageToChatGpt(text);
         setTimeout(() => {
             this.scrollToBottom(true);
         }, 200)
-        //return;
+        return;
 
         //const respo:Observable<any> = this.apiService.getAnswerStreaming(text);
         const answers: any = [];
@@ -1172,7 +1172,9 @@ export class MainComponent implements OnInit, OnDestroy {
                     this.chat[this.chat.length - 1].text = res.answer.errMessage;
                     this.chatGptRequestError = true;
                 }
-                this.chat[this.chat.length - 1].done = true;
+                if (this.chat[this.chat.length - 1]) {
+                    this.chat[this.chat.length - 1].done = true;
+                }
             } else {
                 this.resetItems(res.answer.errMessage);
                 this.chatGptRequestError = true;
