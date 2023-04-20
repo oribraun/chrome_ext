@@ -67,6 +67,7 @@ declare var mammoth: any;
     ]
 })
 export class MainComponent implements OnInit, OnDestroy {
+
     @ViewChild('chat_results_scroll') chatResultsScroll: ElementRef;
     @ViewChild('file_upload_results_scroll') fileUploadResultsScroll: ElementRef;
     allowUserPages = ['prompt-uploader', 'chat', 'settings'];
@@ -306,7 +307,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.chatGptRequestInProgress = true;
             this.chatGptNeedToRefreshToken = false;
 
-            this.sendChatAnalytics(text, title);
+            // this.sendChatAnalytics(text, title);
 
             if (title === 'gaiaAllSummarize') {
                 this.chromeExtensionService.sendMessageToContentScript('get-html', {content: 'text'}).then((res: any) => {
@@ -369,7 +370,7 @@ export class MainComponent implements OnInit, OnDestroy {
             //     return;
             // }
             // this.resetModelResults();
-            this.chatProcessPrompt(text)
+            this.chatProcessPrompt(text, title)
             // this.apiService.getAnswer(text).subscribe(async (res: any) => {
             //     this.sentQuestionToChat = false;
             //     if (res && res.data) {
@@ -409,8 +410,7 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         this.chatGptRequestInProgress = true;
         this.chatGptRequestError = false;
-        this.sendChatAnalytics(text, 'manual-prompt')
-        this.chatProcessPrompt(text)
+        this.chatProcessPrompt(text, 'manual-prompt')
     }
 
     chatProcessPromptChunks(text: string, text_to_send: string, collect_user_prompts = false) {
@@ -437,7 +437,7 @@ export class MainComponent implements OnInit, OnDestroy {
         }, 200)
     }
 
-    chatProcessPrompt(text: string) {
+    chatProcessPrompt(text: string, title: string) {
         this.chat.push({text:text, done: true})
         this.chat.push({text:'', done:false})
         this.sentQuestionToChat = true;
@@ -445,6 +445,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.apiService.collectUserPrompt(text).subscribe((res) => {}, (err) => {});
         this.chatPrompt = '';
         this.chatExpend = false;
+        this.sendChatAnalytics(text, title)
         this.forceBindChanges();
 
         this.chromeExtensionService.showSidebar('getAnswerListener');
@@ -1434,14 +1435,16 @@ export class MainComponent implements OnInit, OnDestroy {
 
     sendChatAnalytics(text: string, type: string) {
         this.chromeExtensionService.sendAnalytics('chat', type, {
-            user_email: this.config.user?.email,
+            // user_email: this.config.user?.email,
+            version: this.config.version,
             server_url: this.config.server_url,
             text: text.substring(0, 100)
         });
     }
     sendFileSubmitAnalytics() {
         this.chromeExtensionService.sendAnalytics('file-submit', 'submit-file-upload', {
-            user_email: this.config.user?.email,
+            // user_email: this.config.user?.email,
+            version: this.config.version,
             task: this.fileTask,
             file_type: this.fileType,
             file_name: this.fileName,

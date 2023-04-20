@@ -4,6 +4,8 @@ import {ApiService} from "./services/api.service";
 import {ChromeExtensionService} from "./services/chrome-extension.service";
 import {NavigationEnd, NavigationError, NavigationStart, Router} from "@angular/router";
 import {MessagesService} from "./services/messages.service";
+import * as packageJsonModule from './../manifest.json';
+const packageJson = (packageJsonModule as any).default
 
 @Component({
     selector: 'app-root',
@@ -33,6 +35,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.getDetailsFromManifest()
         // this.apiService.public(''). subscribe((res) => {
         //     console.log('res', res);
         // })
@@ -40,6 +43,12 @@ export class AppComponent implements OnInit, OnDestroy {
         //     this.setupCredsFromStorage();
         // })
         return;
+    }
+
+    getDetailsFromManifest() {
+        if (packageJson && packageJson.version) {
+            this.config.version = packageJson.version;
+        }
     }
 
 

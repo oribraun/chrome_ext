@@ -163,11 +163,12 @@ export class ApiService {
         )
     }
     getAnswerStreaming(prompt: string) {
-        this.httpOptions['responseType'] = 'text';
-        this.httpOptions['observe'] = 'events';
-        this.httpOptions['reportProgress'] = true;
+        const httpOptions = {...this.httpOptions}
+        httpOptions['responseType'] = 'text';
+        httpOptions['observe'] = 'events';
+        httpOptions['reportProgress'] = true;
         return this.http.post(this.serverBase + this.baseApiUser + 'get-answer', {'prompt': prompt},
-            this.httpOptions
+            httpOptions
         )
     }
     getSettings(key: string) {

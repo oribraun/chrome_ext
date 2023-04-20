@@ -6,6 +6,7 @@ import { Storage } from "./storage";
 const key = "My Secret Passphrase";
 
 export class Config {
+    private _version = '';
     private _user: any = '';
     private _server_host: string = '';
     private _server_host_subject: Subject<any> = new Subject<any>();
@@ -23,6 +24,14 @@ export class Config {
 
     private _prompt_settings: any[];
     private _prompt_settings_subject: Subject<any> = new Subject<any>();
+
+    get version(): string {
+        return this._version;
+    }
+
+    set version(value: string) {
+        this._version = value;
+    }
 
     get user(): any {
         return this._user;

@@ -160,6 +160,9 @@ class ChatGPTClient {
             if (resp.status !== 200) {
                 response.err = 1
                 response.status = resp.status;
+                try {
+                    response.text = payload.messages[0].content.parts[0];
+                } catch (err) {}
                 let resJson;
                 try {
                     resJson = await resp.json();
@@ -184,7 +187,7 @@ class ChatGPTClient {
                 } else {
                     response.errMessage = resJson?.detail || resJson?.detail?.message || "something went wrong";
                 }
-                sendAnalytics({ event: "chat-gpt-error", type: resp.status, obj: response });
+                sendAnalytics({ event: "chat-gpt-error", type: resp.status, json: response });
                 return cb(response);
             }
 
@@ -451,6 +454,9 @@ const sendAnalytics = async (obj) => {
             // data: obj.data,
         }
     };
+    if (obj?.json && isObject(obj?.json)) {
+        payload.properties.json = obj?.json
+    }
     if (obj?.data && isObject(obj?.data)) {
         payload.properties = {...payload.properties, ...obj?.data}
     }
@@ -520,10 +526,13 @@ try {
                             const response = chatgpt.generalResponse();
                             response.err = 1;
                             response.errMessage = err.message;
+                            try {
+                                response.text = msg.payload.messages[0].content.parts[0];
+                            } catch (err) {}
                             if (response.errMessage === 'The user aborted a request.') {
                                 response.errMessage = 'Aborted.'
                             } else {
-                                sendAnalytics({ event: "chat-gpt-error", type: 'exception', obj: response });
+                                sendAnalytics({ event: "chat-gpt-error", type: 'exception', json: response });
                             }
                             if (!isDisconnected) port.postMessage({port: port.name, type: msg.type, answer: response});
                         });
